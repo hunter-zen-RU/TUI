@@ -576,7 +576,10 @@ public class MainManager {
         public boolean trigger(final MainPack info, final String input) throws Exception {
 
             final Command command = CommandTuils.parse(input, info);
-            if(command == null) return false;
+            if(command == null) {
+                android.util.Log.d("MainManager", "Command not parsed: " + input);
+                return false;
+            }
 
             mainPack.lastCommand = input;
 
@@ -587,6 +590,7 @@ public class MainManager {
 
                     try {
                         Object resultObj = command.exec(info);
+                        android.util.Log.d("MainManager", "Command: " + input + ", Result: " + resultObj + " Type: " + (resultObj != null ? resultObj.getClass().getName() : "null"));
                         String output = null;
                         if (resultObj instanceof String) {
                             output = (String) resultObj;
@@ -598,8 +602,12 @@ public class MainManager {
                             output = String.valueOf(resultObj);
                         }
 
+                        android.util.Log.d("MainManager", "Parsed Output: " + output);
                         if(output != null && !output.isEmpty()) {
+                            android.util.Log.d("MainManager", "Sending output: " + output);
                             Tuils.sendOutput(info, output, TerminalManager.CATEGORY_OUTPUT);
+                        } else {
+                            android.util.Log.d("MainManager", "Result was null or empty, not sending output");
                         }
                     } catch (Exception e) {
                         Tuils.sendOutput(mContext, Tuils.getStackTrace(e));

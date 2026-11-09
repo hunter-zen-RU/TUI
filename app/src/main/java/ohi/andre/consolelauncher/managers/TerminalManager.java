@@ -432,7 +432,11 @@ public class TerminalManager {
     }
 
     public void setOutput(CharSequence output, int type) {
-        if (output == null || output.length() == 0) return;
+        android.util.Log.d("TerminalManager", "setOutput called: " + output + " type: " + type);
+        if (output == null || output.length() == 0) {
+            android.util.Log.d("TerminalManager", "setOutput: output is null or empty");
+            return;
+        }
 
         writeToView(output, type);
     }
