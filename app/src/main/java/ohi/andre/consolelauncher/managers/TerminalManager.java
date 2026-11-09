@@ -515,13 +515,20 @@ public class TerminalManager {
                 boolean su = t.toString().startsWith("su ") || suMode;
 
                 SpannableString si = Tuils.span(inputFormat, inputColor);
-                if(clickCommands || longClickCommands) si.setSpan(new LongClickableSpan(clickCommands ? t.toString() : null, longClickCommands ? t.toString() : null, PrivateIOReceiver.ACTION_INPUT), 0,
-                        si.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
                 s = TimeManager.instance.replace(si);
-                s = TextUtils.replace(s,
-                        new String[] {FORMAT_INPUT, FORMAT_PREFIX, FORMAT_NEWLINE, FORMAT_INPUT.toUpperCase(), FORMAT_PREFIX.toUpperCase(), FORMAT_NEWLINE.toUpperCase()},
-                        new CharSequence[] {t, su ? suPrefix : prefix, Tuils.NEWLINE, t, su ? suPrefix : prefix, Tuils.NEWLINE});
+                String sStr = s.toString();
+                sStr = sStr.replace(FORMAT_INPUT, t)
+                        .replace(FORMAT_PREFIX, su ? suPrefix : prefix)
+                        .replace(FORMAT_NEWLINE, Tuils.NEWLINE)
+                        .replace(FORMAT_INPUT.toUpperCase(), t)
+                        .replace(FORMAT_PREFIX.toUpperCase(), su ? suPrefix : prefix)
+                        .replace(FORMAT_NEWLINE.toUpperCase(), Tuils.NEWLINE);
+                s = Tuils.span(sStr, inputColor);
+                if(clickCommands || longClickCommands) {
+                    ((SpannableString)s).setSpan(new LongClickableSpan(clickCommands ? t.toString() : null, longClickCommands ? t.toString() : null, PrivateIOReceiver.ACTION_INPUT), 0,
+                            s.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
 
                 break;
             case CATEGORY_OUTPUT:
@@ -529,9 +536,12 @@ public class TerminalManager {
 
                 SpannableString so = Tuils.span(outputFormat, outputColor);
 
-                s = TextUtils.replace(so,
-                        new String[] {FORMAT_OUTPUT, FORMAT_NEWLINE, FORMAT_OUTPUT.toUpperCase(), FORMAT_NEWLINE.toUpperCase()},
-                        new CharSequence[] {t, Tuils.NEWLINE, t, Tuils.NEWLINE});
+                String outStr = so.toString();
+                outStr = outStr.replace(FORMAT_OUTPUT, t)
+                        .replace(FORMAT_NEWLINE, Tuils.NEWLINE)
+                        .replace(FORMAT_OUTPUT.toUpperCase(), t)
+                        .replace(FORMAT_NEWLINE.toUpperCase(), Tuils.NEWLINE);
+                s = Tuils.span(outStr, outputColor);
 
                 break;
 //            already colored here

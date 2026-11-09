@@ -89,7 +89,7 @@
 
         android:weightSum="@integer/input_group_weightsum"
 
-        android:layout_above="@id/tools_view">
+        android:layout_above="@id/tools_scroll_container">
 
         <ohi.andre.consolelauncher.tuils.OutlineTextView
             android:id="@+id/prefix_view"
@@ -136,6 +136,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
 
+        android:layout_alignParentTop="true"
         android:layout_above="@id/input_group"
 
         android:fillViewport="true">

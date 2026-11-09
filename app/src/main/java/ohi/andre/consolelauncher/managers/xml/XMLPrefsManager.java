@@ -31,6 +31,7 @@ import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsList;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
 import ohi.andre.consolelauncher.managers.xml.options.Behavior;
 import ohi.andre.consolelauncher.managers.xml.options.Cmd;
+import ohi.andre.consolelauncher.managers.xml.options.Dashboard;
 import ohi.andre.consolelauncher.managers.xml.options.Suggestions;
 import ohi.andre.consolelauncher.managers.xml.options.Theme;
 import ohi.andre.consolelauncher.managers.xml.options.Toolbar;
@@ -88,6 +89,12 @@ public class XMLPrefsManager {
             @Override
             public String[] delete() {
                 return new String[] {"app_suggestions_minrate", "contact_suggestions_minrate", "song_suggestions_minrate", "file_suggestions_minrate"};
+            }
+        },
+        DASHBOARD(Dashboard.values()) {
+            @Override
+            public String[] delete() {
+                return new String[] {};
             }
         };
 

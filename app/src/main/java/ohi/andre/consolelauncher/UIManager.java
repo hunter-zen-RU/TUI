@@ -59,6 +59,7 @@ import java.util.regex.Pattern;
 
 import ohi.andre.consolelauncher.commands.main.MainPack;
 import ohi.andre.consolelauncher.commands.main.specific.RedirectCommand;
+import ohi.andre.consolelauncher.managers.DashboardManager;
 import ohi.andre.consolelauncher.managers.HTMLExtractManager;
 import ohi.andre.consolelauncher.managers.NotesManager;
 import ohi.andre.consolelauncher.managers.TerminalManager;
@@ -68,6 +69,7 @@ import ohi.andre.consolelauncher.managers.suggestions.SuggestionTextWatcher;
 import ohi.andre.consolelauncher.managers.suggestions.SuggestionsManager;
 import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.options.Behavior;
+import ohi.andre.consolelauncher.managers.xml.options.Dashboard;
 import ohi.andre.consolelauncher.managers.xml.options.Suggestions;
 import ohi.andre.consolelauncher.managers.xml.options.Theme;
 import ohi.andre.consolelauncher.managers.xml.options.Toolbar;
@@ -117,6 +119,7 @@ public class UIManager implements OnTouchListener {
 
     protected Context mContext;
 
+    private DashboardManager dashboardManager;
     private Handler handler;
 
     private DevicePolicyManager policy;
@@ -1273,6 +1276,9 @@ public class UIManager implements OnTouchListener {
         View inputOutputView = inflater.inflate(layoutId, null);
         rootView.addView(inputOutputView);
 
+        dashboardManager = new DashboardManager(mContext, rootView);
+        dashboardManager.start();
+
         terminalView = (TextView) inputOutputView.findViewById(R.id.terminal_view);
         terminalView.setOnTouchListener(this);
         ((View) terminalView.getParent().getParent()).setOnTouchListener(this);
@@ -1495,6 +1501,8 @@ public class UIManager implements OnTouchListener {
     }
 
     public void dispose() {
+        if(dashboardManager != null) dashboardManager.pause();
+
         if(handler != null) {
             handler.removeCallbacksAndMessages(null);
             handler = null;
@@ -1521,6 +1529,7 @@ public class UIManager implements OnTouchListener {
     }
 
     public void onStart(boolean openKeyboardOnStart) {
+        if(dashboardManager != null) dashboardManager.resume();
         if(openKeyboardOnStart) openKeyboard();
     }
 
@@ -1565,6 +1574,7 @@ public class UIManager implements OnTouchListener {
     }
 
     public void pause() {
+        if(dashboardManager != null) dashboardManager.pause();
         closeKeyboard();
     }
 
