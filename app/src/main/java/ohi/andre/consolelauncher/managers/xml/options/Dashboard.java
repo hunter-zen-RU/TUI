@@ -212,6 +212,14 @@ public enum Dashboard implements XMLPrefsSave {
         public String type() { return XMLPrefsSave.INTEGER; }
         @Override
         public String info() { return "Dashboard real-time refresh interval in milliseconds"; }
+    },
+    long_press_action {
+        @Override
+        public String defaultValue() { return "ai_chat"; }
+        @Override
+        public String type() { return XMLPrefsSave.TEXT; }
+        @Override
+        public String info() { return "Action on dashboard long press: 'none', 'ai_chat' (AI chat with history), 'app_launcher' (Grid icon launcher)."; }
     };
 
     @Override

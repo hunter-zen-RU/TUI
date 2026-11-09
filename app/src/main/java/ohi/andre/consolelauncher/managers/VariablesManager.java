@@ -1,7 +1,13 @@
 package ohi.andre.consolelauncher.managers;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.TrafficStats;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.SystemClock;
 
 import org.w3c.dom.Document;
@@ -25,6 +31,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
+import ohi.andre.consolelauncher.managers.xml.options.Ui;
 import ohi.andre.consolelauncher.tuils.Tuils;
 
 public class VariablesManager {
@@ -162,6 +170,78 @@ public class VariablesManager {
         if (result.contains("{{uptime}}")) {
             long sec = SystemClock.elapsedRealtime() / 1000;
             result = result.replace("{{uptime}}", String.valueOf(sec));
+        }
+
+        // Predefined System Variables
+        if (result.contains("{{device}}")) {
+            result = result.replace("{{device}}", Build.MODEL);
+        }
+        if (result.contains("{{user}}")) {
+            String user = XMLPrefsManager.get(Ui.username);
+            result = result.replace("{{user}}", user != null ? user : "user");
+        }
+        if (result.contains("{{os_version}}")) {
+            result = result.replace("{{os_version}}", "Android " + Build.VERSION.RELEASE);
+        }
+        if (result.contains("{{cpu_usage}}")) {
+            result = result.replace("{{cpu_usage}}", String.valueOf(Tuils.getCpuUsage()));
+        }
+        if (result.contains("{{ram_total}}")) {
+            result = result.replace("{{ram_total}}", Tuils.round(Tuils.totalRam() / 1024.0 / 1024.0, 1) + "G");
+        }
+        if (result.contains("{{ram_avail}}") && context != null) {
+            android.app.ActivityManager am = (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            result = result.replace("{{ram_avail}}", Tuils.round(mi.availMem / 1024.0 / 1024.0 / 1024.0, 1) + "G");
+        }
+        if (result.contains("{{ram_used}}") && context != null) {
+            android.app.ActivityManager am = (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            long total = Tuils.totalRam() * 1024;
+            long used = total - mi.availMem;
+            result = result.replace("{{ram_used}}", Tuils.round(used / 1024.0 / 1024.0 / 1024.0, 1) + "G");
+        }
+        if (result.contains("{{storage_total}}")) {
+            result = result.replace("{{storage_total}}", (int) Tuils.getTotalInternalMemorySize(Tuils.GIGA) + "G");
+        }
+        if (result.contains("{{storage_avail}}")) {
+            result = result.replace("{{storage_avail}}", (int) Tuils.getAvailableInternalMemorySize(Tuils.GIGA) + "G");
+        }
+        if (result.contains("{{network}}") && context != null) {
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            String net = (activeNetwork != null && activeNetwork.isConnected()) ? activeNetwork.getTypeName() : "OFFLINE";
+            result = result.replace("{{network}}", net);
+        }
+        if (result.contains("{{network_name}}") && context != null) {
+            String name = "OFFLINE";
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            if (activeNetwork != null && activeNetwork.isConnected()) {
+                if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
+                    WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    WifiInfo info = wifiManager.getConnectionInfo();
+                    name = info.getSSID();
+                    if (name != null) name = name.replace("\"", "");
+                } else {
+                    name = activeNetwork.getSubtypeName();
+                }
+            }
+            result = result.replace("{{network_name}}", name != null ? name : "UNKNOWN");
+        }
+        if (result.contains("{{network_upload}}") || result.contains("{{network_download}}")) {
+            long rxBytes = TrafficStats.getTotalRxBytes();
+            long txBytes = TrafficStats.getTotalTxBytes();
+            // These are total since boot. For "speed" we'd need a delta, but for now we'll provide formatted total as requested or just raw values.
+            // Usually users want current speed, but without a background task tracking deltas, we'll provide formatted total human readable.
+            if (result.contains("{{network_download}}")) {
+                result = result.replace("{{network_download}}", Tuils.formatSize(rxBytes, Tuils.MEGA) + "MB");
+            }
+            if (result.contains("{{network_upload}}")) {
+                result = result.replace("{{network_upload}}", Tuils.formatSize(txBytes, Tuils.MEGA) + "MB");
+            }
         }
 
         // Local script variables

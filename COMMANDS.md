@@ -77,3 +77,39 @@ adb push local_file.txt /data/user/0/ohi.andre.consolelauncher/files/
 
 ## 🛡 Security Note
 All binaries are verified using hardcoded SHA-256 hashes found in `app/src/main/java/ohi/andre/consolelauncher/tuils/BusyBoxInstaller.java`. All network transport is forced over HTTPS.
+
+---
+
+## ⌨️ User Command Reference (New Features)
+
+### 🤖 Gemini AI (`ai`)
+Integrate Google's Gemini AI directly into your terminal.
+*   `ai [prompt]`: Ask Gemini a question.
+*   `ai -key [apikey]`: Set your Gemini API key (stored in `ai.xml`).
+*   `ai -test`: Verify AI connection and responsiveness.
+*   `ai -set [prompt] [var]`: Save AI response into a T-UI variable.
+*   `ai -sys [prompt]`: Set the AI's system personality.
+
+### 📦 Package Management (`pkg` / `tui`)
+Manage hybrid scripts and native Termux packages.
+*   `pkg -install [name]`: Install custom `.tui` scripts or native packages.
+*   `pkg -search [query]`: Search the GitHub repository for tools.
+*   `pkg -ls`: List all installed packages and scripts.
+*   `pkg -repo [url]`: View or set the custom GitHub Pages repo source.
+*   `tui -set [apt|pkg|hybrid]`: Force a specific package manager engine.
+*   `tui -run [cmd]`: Run any installed Termux binary (python, git, etc.) via `login -d`.
+*   `tui -update-app`: Check for and install T-UI launcher updates.
+
+### 📊 Dashboard (`dashboard`)
+Interactive system telemetry.
+*   `dashboard -on | -off`: Toggle the system dashboard.
+*   `dashboard -toggle`: Switch between **Grid** and **Native** modes.
+*   `dashboard -layout [RxC]`: Change grid dimensions (e.g., `2x2`).
+*   **Expansion**: Click the grid dashboard to expand to a full **5x5 Pro Grid**.
+*   **Long Press**: Configurable via `dashboard.xml` (`long_press_action`). Supports `ai_chat` (Interactive Chat) and `app_launcher` (Grid UI).
+
+### 📝 Automation & Scripting (`tedit` / `run`)
+Write and execute powerful automation workflows.
+*   `tedit [file.tui]`: Open the Nordic-style script editor with syntax highlighting.
+*   `run [file.tui]`: Execute a `.tui` automation script.
+*   See `TUI_SCRIPTING.md` for syntax details.

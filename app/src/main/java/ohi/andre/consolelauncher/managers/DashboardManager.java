@@ -56,6 +56,7 @@ public class DashboardManager {
     private int rows = 2;
     private int cols = 2;
     private int refreshIntervalMs = 1000;
+    private String longPressAction = "ai_chat";
 
     private String fillChar = "█";
     private String emptyChar = "░";
@@ -119,6 +120,10 @@ public class DashboardManager {
                     toggleExpand();
                 }
             });
+            gridWrapper.setOnLongClickListener(v -> {
+                handleLongPress();
+                return true;
+            });
         }
     }
 
@@ -174,6 +179,9 @@ public class DashboardManager {
             try { storageColor = Color.parseColor(XMLPrefsManager.get(Dashboard.storage_color)); } catch (Exception e) {}
             try { netColor = Color.parseColor(XMLPrefsManager.get(Dashboard.net_color)); } catch (Exception e) {}
             try { uptimeColor = Color.parseColor(XMLPrefsManager.get(Dashboard.uptime_color)); } catch (Exception e) {}
+
+            longPressAction = XMLPrefsManager.get(Dashboard.long_press_action);
+            if (longPressAction == null) longPressAction = "ai_chat";
 
         } catch (Exception e) { Tuils.log(e); }
     }
@@ -291,6 +299,31 @@ public class DashboardManager {
     }
     public void pause() { isRunning = false; handler.removeCallbacks(tickRunnable); }
     public void resume() { start(); }
+
+    private void handleLongPress() {
+        if ("none".equalsIgnoreCase(longPressAction)) return;
+
+        if ("ai_chat".equalsIgnoreCase(longPressAction)) {
+            // Activity will be created next
+            Intent intent = new Intent();
+            intent.setComponent(new android.content.ComponentName(context, "ohi.andre.consolelauncher.managers.AiChatActivity"));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                context.startActivity(intent);
+            } catch (Exception e) {
+                Tuils.sendOutput(context, "AI Chat Activity not found.");
+            }
+        } else if ("app_launcher".equalsIgnoreCase(longPressAction)) {
+            Intent intent = new Intent();
+            intent.setComponent(new android.content.ComponentName(context, "ohi.andre.consolelauncher.managers.GridAppLauncherActivity"));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                context.startActivity(intent);
+            } catch (Exception e) {
+                Tuils.sendOutput(context, "App Launcher Activity not found.");
+            }
+        }
+    }
 
     private void toggleExpand() {
         if (!isExpanded) {
