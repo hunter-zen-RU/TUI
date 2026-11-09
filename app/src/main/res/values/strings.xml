@@ -6,6 +6,9 @@
     <string name="help_history">View last 20 MacroDroid execution logs from SQLite storage.\nUsage: history [clear]</string>
     <string name="help_termux">Manage Termux shell sessions.\nUsage:\ntermux login -> Start interactive shell session\ntermux status -> Display shell availability &amp; environment</string>
     <string name="help_shell">Execute a shell command directly bypassing interpreter.\nUsage: shell [command]</string>
+    <string name="help_schedule">Schedule actions using 5-field cron pattern with WorkManager.\nUsage:\nschedule -add \"*/15 * * * *\" [action]\nschedule -ls\nschedule -rm [tag]\nschedule -clear</string>
+    <string name="help_notify">Post a system notification.\nUsage: notify \"[title]\" \"[message]\"</string>
+    <string name="help_launch">Launch an app by package name or specific component.\nUsage: launch [package_name] [activity_name]</string>
     <string name="location_off">Turn on GPS</string>
     <string name="share_label">Share</string>
     <string name="output_about">Francesco Andreuzzi (Italy)\n\t-> Programmer

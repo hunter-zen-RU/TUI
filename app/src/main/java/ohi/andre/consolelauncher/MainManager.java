@@ -439,7 +439,17 @@ public class MainManager {
         public boolean trigger(MainPack info, String input) throws Exception {
             HybridCommandInterpreter interpreter = new HybridCommandInterpreter(info.context, info);
             HybridCommandInterpreter.CommandResult result = interpreter.handleInput(input);
-            if (result instanceof HybridCommandInterpreter.CommandResult.MacroTriggered) {
+            if (result instanceof HybridCommandInterpreter.CommandResult.Scheduled) {
+                HybridCommandInterpreter.CommandResult.Scheduled sched = (HybridCommandInterpreter.CommandResult.Scheduled) result;
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
+                String nextStr = sdf.format(new java.util.Date(sched.getNextRunMillis()));
+                Tuils.sendOutput(mContext, "Scheduled job [" + sched.getTag() + "] with cron \"" + sched.getCronExpr() + "\"\nNext run: " + nextStr + "\nAction: " + sched.getAction());
+                return true;
+            } else if (result instanceof HybridCommandInterpreter.CommandResult.ActionExecuted) {
+                HybridCommandInterpreter.CommandResult.ActionExecuted act = (HybridCommandInterpreter.CommandResult.ActionExecuted) result;
+                Tuils.sendOutput(mContext, act.getOutput());
+                return true;
+            } else if (result instanceof HybridCommandInterpreter.CommandResult.MacroTriggered) {
                 HybridCommandInterpreter.CommandResult.MacroTriggered macroRes = (HybridCommandInterpreter.CommandResult.MacroTriggered) result;
                 if (macroRes.getIntentSent()) {
                     Tuils.sendOutput(mContext, "MacroDroid: Triggered \"" + macroRes.getMacroName() + "\" (" + macroRes.getVariables().size() + " vars)");
