@@ -576,8 +576,19 @@ public class MainManager {
                     super.run();
 
                     try {
-                        String output = command.exec(info);
-                        if(output != null) {
+                        Object resultObj = command.exec(info);
+                        String output = null;
+                        if (resultObj instanceof String) {
+                            output = (String) resultObj;
+                        } else if (resultObj instanceof List) {
+                            output = Tuils.toPlanString((List) resultObj, "\n");
+                        } else if (resultObj instanceof CharSequence) {
+                            output = ((CharSequence) resultObj).toString();
+                        } else if (resultObj != null) {
+                            output = String.valueOf(resultObj);
+                        }
+
+                        if(output != null && !output.isEmpty()) {
                             Tuils.sendOutput(info, output, TerminalManager.CATEGORY_OUTPUT);
                         }
                     } catch (Exception e) {

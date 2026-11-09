@@ -4,6 +4,8 @@
     <string name="app_name">T-UI</string>
     <string name="help_macro">Trigger MacroDroid macro with variables.\nUsage: macro \"Macro Name\" var1=\"val\" var2=123</string>
     <string name="help_history">View last 20 MacroDroid execution logs from SQLite storage.\nUsage: history [clear]</string>
+    <string name="help_termux">Manage Termux shell sessions.\nUsage:\ntermux login -> Start interactive shell session\ntermux status -> Display shell availability &amp; environment</string>
+    <string name="help_shell">Execute a shell command directly bypassing interpreter.\nUsage: shell [command]</string>
     <string name="location_off">Turn on GPS</string>
     <string name="share_label">Share</string>
     <string name="output_about">Francesco Andreuzzi (Italy)\n\t-> Programmer

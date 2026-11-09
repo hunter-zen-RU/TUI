@@ -2,96 +2,116 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
 
     <ohi.andre.consolelauncher.tuils.OutlineTextView android:id="@+id/tv0"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical" />
 
     <ohi.andre.consolelauncher.tuils.OutlineTextView android:id="@+id/tv1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical" />
 
     <ohi.andre.consolelauncher.tuils.OutlineTextView android:id="@+id/tv2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical" />
 
     <ohi.andre.consolelauncher.tuils.OutlineTextView android:id="@+id/tv3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical" />
 
     <ohi.andre.consolelauncher.tuils.OutlineTextView android:id="@+id/tv4"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical" />
 
     <ohi.andre.consolelauncher.tuils.OutlineTextView android:id="@+id/tv5"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical" />
 
     <ohi.andre.consolelauncher.tuils.OutlineTextView android:id="@+id/tv6"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical" />
 
     <ohi.andre.consolelauncher.tuils.OutlineTextView android:id="@+id/tv7"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical" />
 
     <ohi.andre.consolelauncher.tuils.OutlineTextView android:id="@+id/tv8"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="4dp"
+        android:background="#20FFFFFF" />
 
 </LinearLayout>

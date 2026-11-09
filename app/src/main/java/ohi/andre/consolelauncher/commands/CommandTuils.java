@@ -42,7 +42,7 @@ public class CommandTuils {
         Command command = new Command();
 
         String name = CommandTuils.findName(input);
-        if (!Tuils.isAlpha(name))
+        if (name == null || name.length() == 0)
             return null;
 
         CommandAbstraction cmd = info.commandGroup.getCommandByName(name);

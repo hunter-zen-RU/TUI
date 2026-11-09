@@ -63,8 +63,10 @@ public class PrivateIOReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 //        to avoid double onReceive calls
         int cId = intent.getIntExtra(CURRENT_ID, -1);
-        if(cId != -1 && cId != currentId) return;
-        currentId++;
+        if(cId != -1) {
+            if(cId != currentId) return;
+            currentId++;
+        }
 
         Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
         if(remoteInput == null || remoteInput.size() == 0) {

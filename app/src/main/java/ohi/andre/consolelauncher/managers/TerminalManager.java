@@ -283,7 +283,90 @@ public class TerminalManager {
 //                    return source;
 //                }
 //            }});
-//        }
+    }
+
+    public void setupExtraToolbarKeys(TextView ctrlView, TextView shiftView, TextView altView, TextView leftView, TextView rightView) {
+        int toolbarColor = XMLPrefsManager.getColor(Theme.toolbar_color);
+
+        if (ctrlView != null) {
+            ctrlView.setTextColor(toolbarColor);
+            ctrlView.setTypeface(Tuils.getTypeface(mContext));
+            ctrlView.setOnClickListener(v -> onCtrlPressed());
+        }
+
+        if (shiftView != null) {
+            shiftView.setTextColor(toolbarColor);
+            shiftView.setTypeface(Tuils.getTypeface(mContext));
+            shiftView.setOnClickListener(v -> onShiftPressed());
+        }
+
+        if (altView != null) {
+            altView.setTextColor(toolbarColor);
+            altView.setTypeface(Tuils.getTypeface(mContext));
+            altView.setOnClickListener(v -> onAltPressed());
+        }
+
+        if (leftView != null) {
+            leftView.setTextColor(toolbarColor);
+            leftView.setTypeface(Tuils.getTypeface(mContext));
+            leftView.setOnClickListener(v -> onLeftPressed());
+        }
+
+        if (rightView != null) {
+            rightView.setTextColor(toolbarColor);
+            rightView.setTypeface(Tuils.getTypeface(mContext));
+            rightView.setOnClickListener(v -> onRightPressed());
+        }
+    }
+
+    private void onCtrlPressed() {
+        if (mInputView == null) return;
+        int sel = mInputView.getSelectionStart();
+        if (sel >= 0) {
+            mInputView.getText().insert(sel, "^C");
+        } else {
+            setInput(getInput() + "^C");
+        }
+    }
+
+    private void onShiftPressed() {
+        if (mInputView == null) return;
+        int start = mInputView.getSelectionStart();
+        int end = mInputView.getSelectionEnd();
+        if (start >= 0 && end > start) {
+            String selected = mInputView.getText().subSequence(start, end).toString();
+            mInputView.getText().replace(start, end, selected.toUpperCase());
+        } else if (start >= 0) {
+            mInputView.getText().insert(start, "SHIFT ");
+        } else {
+            setInput(getInput() + "SHIFT ");
+        }
+    }
+
+    private void onAltPressed() {
+        if (mInputView == null) return;
+        int sel = mInputView.getSelectionStart();
+        if (sel >= 0) {
+            mInputView.getText().insert(sel, "ALT ");
+        } else {
+            setInput(getInput() + "ALT ");
+        }
+    }
+
+    private void onLeftPressed() {
+        if (mInputView == null) return;
+        int cursor = mInputView.getSelectionStart();
+        if (cursor > 0) {
+            mInputView.setSelection(cursor - 1);
+        }
+    }
+
+    private void onRightPressed() {
+        if (mInputView == null) return;
+        int cursor = mInputView.getSelectionStart();
+        if (cursor < mInputView.getText().length()) {
+            mInputView.setSelection(cursor + 1);
+        }
     }
 
     private void setupNewInput() {

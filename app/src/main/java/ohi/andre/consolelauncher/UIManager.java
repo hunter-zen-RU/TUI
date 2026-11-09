@@ -771,6 +771,7 @@ public class UIManager implements OnTouchListener {
     public MainPack pack;
 
     private boolean clearOnLock;
+    private boolean[] show;
 
     protected UIManager(final Context context, final ViewGroup rootView, MainPack mainPack, boolean canApplyTheme, CommandExecuter executer) {
 
@@ -796,6 +797,7 @@ public class UIManager implements OnTouchListener {
                     if(suggestionsManager != null) suggestionsManager.requestSuggestion(Tuils.EMPTYSTRING);
                 } else if(action.equals(ACTION_UPDATE_HINT)) {
                     mTerminalAdapter.setDefaultHint();
+                    updateDeviceStatus();
                 } else if(action.equals(ACTION_ROOT)) {
                     mTerminalAdapter.onRoot();
                 } else if(action.equals(ACTION_NOROOT)) {
@@ -1014,7 +1016,7 @@ public class UIManager implements OnTouchListener {
                 (TextView) rootView.findViewById(R.id.tv8),
         };
 
-        boolean[] show = new boolean[Label.values().length];
+        show = new boolean[Label.values().length];
         show[Label.notes.ordinal()] = XMLPrefsManager.getBoolean(Ui.show_notes);
         show[Label.ram.ordinal()] = XMLPrefsManager.getBoolean(Ui.show_ram);
         show[Label.device.ordinal()] = XMLPrefsManager.getBoolean(Ui.show_device_name);
@@ -1154,24 +1156,7 @@ public class UIManager implements OnTouchListener {
             handler.post(storageRunnable);
         }
 
-        if (show[Label.device.ordinal()]) {
-            Pattern USERNAME = Pattern.compile("%u", Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
-            Pattern DV = Pattern.compile("%d", Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
-
-            String deviceFormat = XMLPrefsManager.get(Behavior.device_format);
-
-            String username = XMLPrefsManager.get(Ui.username);
-            String deviceName = XMLPrefsManager.get(Ui.deviceName);
-            if (deviceName == null || deviceName.length() == 0) {
-                deviceName = Build.DEVICE;
-            }
-
-            deviceFormat = USERNAME.matcher(deviceFormat).replaceAll(Matcher.quoteReplacement(username != null ? username : "null"));
-            deviceFormat = DV.matcher(deviceFormat).replaceAll(Matcher.quoteReplacement(deviceName));
-            deviceFormat = Tuils.patternNewline.matcher(deviceFormat).replaceAll(Matcher.quoteReplacement(Tuils.NEWLINE));
-
-            updateText(Label.device, Tuils.span(mContext, deviceFormat, XMLPrefsManager.getColor(Theme.device_color), labelSizes[Label.device.ordinal()]));
-        }
+        updateDeviceStatus();
 
         if(show[Label.time.ordinal()]) {
             timeRunnable = new TimeRunnable();
@@ -1331,8 +1316,19 @@ public class UIManager implements OnTouchListener {
         ImageButton deleteView = null;
         ImageButton pasteView = null;
 
+        TextView ctrlView = null;
+        TextView shiftView = null;
+        TextView altView = null;
+        TextView leftView = null;
+        TextView rightView = null;
+
         if(!showToolbar) {
-            inputOutputView.findViewById(R.id.tools_view).setVisibility(View.GONE);
+            View toolsContainer = inputOutputView.findViewById(R.id.tools_scroll_container);
+            if (toolsContainer != null) {
+                toolsContainer.setVisibility(View.GONE);
+            } else {
+                inputOutputView.findViewById(R.id.tools_view).setVisibility(View.GONE);
+            }
             toolbarView = null;
         } else {
             backView = (ImageButton) inputOutputView.findViewById(R.id.back_view);
@@ -1340,13 +1336,25 @@ public class UIManager implements OnTouchListener {
             deleteView = (ImageButton) inputOutputView.findViewById(R.id.delete_view);
             pasteView = (ImageButton) inputOutputView.findViewById(R.id.paste_view);
 
-            toolbarView = inputOutputView.findViewById(R.id.tools_view);
+            ctrlView = (TextView) inputOutputView.findViewById(R.id.ctrl_view);
+            shiftView = (TextView) inputOutputView.findViewById(R.id.shift_view);
+            altView = (TextView) inputOutputView.findViewById(R.id.alt_view);
+            leftView = (TextView) inputOutputView.findViewById(R.id.left_view);
+            rightView = (TextView) inputOutputView.findViewById(R.id.right_view);
+
+            toolbarView = inputOutputView.findViewById(R.id.tools_scroll_container);
+            if (toolbarView == null) {
+                toolbarView = inputOutputView.findViewById(R.id.tools_view);
+            }
             hideToolbarNoInput = XMLPrefsManager.getBoolean(Toolbar.hide_toolbar_no_input);
 
             applyBgRect(toolbarView, bgRectColors[TOOLBAR_BGCOLOR_INDEX], bgColors[TOOLBAR_BGCOLOR_INDEX], margins[TOOLBAR_MARGINS_INDEX], strokeWidth, cornerRadius);
         }
 
         mTerminalAdapter = new TerminalManager(terminalView, inputView, prefixView, submitView, backView, nextView, deleteView, pasteView, context, mainPack, executer);
+        if (showToolbar) {
+            mTerminalAdapter.setupExtraToolbarKeys(ctrlView, shiftView, altView, leftView, rightView);
+        }
 
         if (XMLPrefsManager.getBoolean(Suggestions.show_suggestions)) {
             HorizontalScrollView sv = (HorizontalScrollView) rootView.findViewById(R.id.suggestions_container);
@@ -1375,6 +1383,36 @@ public class UIManager implements OnTouchListener {
         int drawTimes = XMLPrefsManager.getInt(Ui.text_redraw_times);
         if(drawTimes <= 0) drawTimes = 1;
         OutlineTextView.redrawTimes = drawTimes;
+    }
+
+    public void updateDeviceStatus() {
+        if (show == null || labelSizes == null) return;
+        if (show[Label.device.ordinal()]) {
+            Pattern USERNAME = Pattern.compile("%u", Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
+            Pattern DV = Pattern.compile("%d", Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
+
+            String deviceFormat = XMLPrefsManager.get(Behavior.device_format);
+
+            String username = XMLPrefsManager.get(Ui.username);
+            String deviceName = XMLPrefsManager.get(Ui.deviceName);
+            if (deviceName == null || deviceName.length() == 0) {
+                deviceName = Build.DEVICE;
+            }
+
+            deviceFormat = USERNAME.matcher(deviceFormat).replaceAll(Matcher.quoteReplacement(username != null ? username : "null"));
+            deviceFormat = DV.matcher(deviceFormat).replaceAll(Matcher.quoteReplacement(deviceName));
+            deviceFormat = Tuils.patternNewline.matcher(deviceFormat).replaceAll(Matcher.quoteReplacement(Tuils.NEWLINE));
+
+            boolean termuxActive = ohi.andre.consolelauncher.managers.TermuxSessionManager.Companion.isSessionActive();
+            String termuxTag = termuxActive ? "  [TERMUX: ACTIVE]" : "  [TERMUX: IDLE]";
+            int termuxColor = termuxActive ? Color.parseColor("#00FF66") : Color.parseColor("#768390");
+
+            CharSequence baseDevice = Tuils.span(mContext, deviceFormat, XMLPrefsManager.getColor(Theme.device_color), labelSizes[Label.device.ordinal()]);
+            CharSequence statusTag = Tuils.span(mContext, termuxTag, termuxColor, labelSizes[Label.device.ordinal()]);
+            CharSequence fullDeviceStatus = TextUtils.concat(baseDevice, statusTag);
+
+            updateText(Label.device, fullDeviceStatus);
+        }
     }
 
     public static int[] getListOfIntValues(String values, int length, int defaultValue) {
