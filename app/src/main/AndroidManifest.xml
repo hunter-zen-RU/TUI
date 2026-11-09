@@ -266,6 +266,15 @@
             android:name=".managers.notifications.NotificationMonitorService"
             android:exported="false" />
 
+        <service
+            android:name=".managers.TuiDownloadService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_TYPE"
+                android:value="Downloads TUI packages and scripts in the background to ensure reliability."/>
+        </service>
+
         <activity
             android:name=".tuils.stuff.FakeLauncherActivity"
             android:enabled="false"
@@ -277,6 +286,13 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".tuils.TuiEditorActivity"
+            android:label="TUI Editor"
+            android:theme="@style/Custom.Solid"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
         <receiver
             android:name=".tuils.PublicIOReceiver"
             android:permission="ohi.andre.consolelauncher.permission.RECEIVE_CMD"

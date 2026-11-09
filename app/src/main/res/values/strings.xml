@@ -12,7 +12,13 @@
     <string name="help_dashboard">Manage dashboard display mode and configuration.\nUsage:\n$ dashboard -mode grid -> Switch to modern grid dashboard\n$ dashboard -mode native -> Switch to legacy list dashboard\n$ dashboard -toggle -> Toggle between grid and native modes\n$ dashboard -layout 2x2 -> Change grid layout (1x1 to 5x5)\n$ dashboard -file -> Open dashboard.xml</string>
     <string name="help_toast">Display a system toast notification.\nUsage:\n$ toast [text] -> Show quick toast\n$ toast -long [text] -> Show long duration toast</string>
     <string name="help_run">Execute a .tui automation script file.\nUsage:\n$ run [file.tui] -> Run .tui automation script containing commands, sleep, and actions</string>
+    <string name="help_tedit">Open the specialized .tui script editor with syntax highlighting.\nUsage:\n$ tedit [file.tui]</string>
     <string name="help_variables">Manage global variables stored in variables.xml.\nUsage:\n$ variables -set [var]=[val] -> Set variable value\n$ variables -get [var] -> Retrieve variable value\n$ variables -ls -> List all variables with auto-detected types\n$ variables -file -> Open variables.xml</string>
+    <string name="help_pkg">Package manager to search, install, and remove custom T-UI packages &amp; scripts from GitHub Pages.\nUsage:\n$ pkg -install [pkg_name] -> Install package or .tui script\n$ pkg -search [query] -> Search repository packages\n$ pkg -ls -> List installed packages\n$ pkg -rm [pkg_name] -> Remove an installed package\n$ pkg -repo [url] -> View or set GitHub Pages repo URL</string>
+    <string name="help_tui_run">Run any Termux command inside TUI using the login wrapper.\nUsage:\n$ tui_run [command] [args]</string>
+    <string name="help_tui_manager">Manage package installation engine (Hybrid/Native/Apt/Pkg).\nUsage:\n$ tui install [package] -> Install package (Hybrid/Bypass)\n$ tui set [mgr] -> Force package manager (apt|pkg|hybrid)\n$ tui get -> Show active package manager</string>
+    <string name="help_ai">Gemini AI integration.\nUsage:\n$ ai [prompt] -> Ask Gemini a question\n$ ai -key [apikey] -> Set Gemini API key\n$ ai -test -> Test AI connection\n$ ai -set [prompt] [variable] -> Store AI response in a variable\n$ ai -sys [prompt] -> Update system prompt</string>
+    <string name="help_api_cmd">API key management.\nUsage:\n$ api -key [apikey] -> Set Gemini API key</string>
     <string name="location_off">Turn on GPS</string>
     <string name="share_label">Share</string>
     <string name="output_about">Francesco Andreuzzi (Italy)\n\t-> Programmer

@@ -13,6 +13,14 @@ public enum Dashboard implements XMLPrefsSave {
         @Override
         public String info() { return "Dashboard system mode: 'grid' (modern grid system) or 'native' (legacy list)."; }
     },
+    dashboard_enabled {
+        @Override
+        public String defaultValue() { return "true"; }
+        @Override
+        public String type() { return XMLPrefsSave.BOOLEAN; }
+        @Override
+        public String info() { return "Enable or disable the dashboard entirely."; }
+    },
     enable_blur_effect {
         @Override
         public String defaultValue() { return "true"; }

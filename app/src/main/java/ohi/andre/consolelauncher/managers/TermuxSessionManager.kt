@@ -75,14 +75,19 @@ class TermuxSessionManager(private val context: Context) {
         val binDir = File(prefixDir, "bin").apply { if (!exists()) mkdirs() }
         val tmpDir = File(context.cacheDir, "tmp").apply { if (!exists()) mkdirs() }
 
+        val tuiBinDir = File(homeDir, "tui/bin").apply { if (!exists()) mkdirs() }
+        val termuxBinDir = "/data/data/com.termux/files/usr/bin"
         val systemPath = System.getenv("PATH") ?: "/system/bin:/system/xbin"
-        val fullPath = "${binDir.absolutePath}:$systemPath"
+        val fullPath = "${tuiBinDir.absolutePath}:${termuxBinDir}:${binDir.absolutePath}:$systemPath"
 
+        val termuxPrefix = "/data/data/com.termux/files/usr"
         val env = mutableMapOf(
             "HOME" to homeDir.absolutePath,
             "PREFIX" to prefixDir.absolutePath,
+            "TERMUX_PREFIX" to termuxPrefix,
             "TMPDIR" to tmpDir.absolutePath,
             "PATH" to fullPath,
+            "LD_LIBRARY_PATH" to "$termuxPrefix/lib",
             "TERM" to "xterm-256color",
             "COLORTERM" to "truecolor",
             "ANDROID_DATA" to System.getenv("ANDROID_DATA").orEmpty(),

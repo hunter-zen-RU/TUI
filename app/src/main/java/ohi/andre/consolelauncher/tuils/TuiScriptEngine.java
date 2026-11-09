@@ -173,4 +173,25 @@ public class TuiScriptEngine {
             Tuils.sendOutput(context, "[T-UI Engine] Completed script: " + scriptName);
         }).start();
     }
+    public static List<String> validateSyntax(List<String> lines) {
+        List<String> issues = new ArrayList<>();
+        boolean hasShebang = false;
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i).trim();
+            if (line.isEmpty() || line.startsWith("#") || line.startsWith("//")) {
+                if (i == 0 && line.startsWith(SHEBANG)) hasShebang = true;
+                continue;
+            }
+            if (line.startsWith("{{") && !line.contains("}}")) {
+                issues.add("Line " + (i + 1) + ": Unclosed custom command placeholder '{{'");
+            }
+            if (line.contains("=") && !line.startsWith("set ") && !line.contains("{{")) {
+                // simple assignment check
+            }
+        }
+        if (!hasShebang) {
+            issues.add("Warning: Missing recommended TUI shebang '" + SHEBANG + "' at line 1.");
+        }
+        return issues;
+    }
 }

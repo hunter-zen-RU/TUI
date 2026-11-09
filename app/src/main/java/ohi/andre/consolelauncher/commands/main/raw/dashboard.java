@@ -102,6 +102,26 @@ public class dashboard extends ParamCommand {
                 return "Dashboard blur effect set to: " + enable;
             }
         },
+        on {
+            @Override
+            public int[] args() { return new int[0]; }
+            @Override
+            public String exec(ExecutePack pack) {
+                XMLPrefsManager.XMLPrefsRoot.DASHBOARD.write(Dashboard.dashboard_enabled, "true");
+                if (pack.context instanceof Reloadable) ((Reloadable) pack.context).reload();
+                return "Dashboard enabled.";
+            }
+        },
+        off {
+            @Override
+            public int[] args() { return new int[0]; }
+            @Override
+            public String exec(ExecutePack pack) {
+                XMLPrefsManager.XMLPrefsRoot.DASHBOARD.write(Dashboard.dashboard_enabled, "false");
+                if (pack.context instanceof Reloadable) ((Reloadable) pack.context).reload();
+                return "Dashboard disabled.";
+            }
+        },
         file {
             @Override
             public int[] args() {
