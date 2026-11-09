@@ -24,6 +24,7 @@ import ohi.andre.consolelauncher.commands.main.raw.location;
 import ohi.andre.consolelauncher.commands.main.specific.RedirectCommand;
 import ohi.andre.consolelauncher.managers.AliasManager;
 import ohi.andre.consolelauncher.managers.AppsManager;
+import ohi.andre.consolelauncher.managers.HybridCommandInterpreter;
 import ohi.andre.consolelauncher.managers.ChangelogManager;
 import ohi.andre.consolelauncher.managers.ContactManager;
 import ohi.andre.consolelauncher.managers.HTMLExtractManager;
@@ -38,7 +39,6 @@ import ohi.andre.consolelauncher.managers.notifications.KeeperService;
 import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.options.Behavior;
 import ohi.andre.consolelauncher.managers.xml.options.Theme;
-import ohi.andre.consolelauncher.tuils.BusyBoxInstaller;
 import ohi.andre.consolelauncher.tuils.PrivateIOReceiver;
 import ohi.andre.consolelauncher.tuils.StoppableThread;
 import ohi.andre.consolelauncher.tuils.Tuils;
@@ -102,6 +102,7 @@ public class MainManager {
     private final String COMMANDS_PKG = "ohi.andre.consolelauncher.commands.main.raw";
 
     private CmdTrigger[] triggers = new CmdTrigger[] {
+            new MacroTrigger(),
             new GroupTrigger(),
             new AliasTrigger(),
             new TuiCommandTrigger(),
@@ -433,6 +434,24 @@ public class MainManager {
         boolean trigger(MainPack info, String input) throws Exception;
     }
 
+    private class MacroTrigger implements CmdTrigger {
+        @Override
+        public boolean trigger(MainPack info, String input) throws Exception {
+            HybridCommandInterpreter interpreter = new HybridCommandInterpreter(info.context, info);
+            HybridCommandInterpreter.CommandResult result = interpreter.handleInput(input);
+            if (result instanceof HybridCommandInterpreter.CommandResult.MacroTriggered) {
+                HybridCommandInterpreter.CommandResult.MacroTriggered macroRes = (HybridCommandInterpreter.CommandResult.MacroTriggered) result;
+                if (macroRes.getIntentSent()) {
+                    Tuils.sendOutput(mContext, "MacroDroid: Triggered \"" + macroRes.getMacroName() + "\" (" + macroRes.getVariables().size() + " vars)");
+                } else {
+                    Tuils.sendOutput(mContext, "MacroDroid: Failed to send intent for \"" + macroRes.getMacroName() + "\"");
+                }
+                return true;
+            }
+            return false;
+        }
+    }
+
     private class AliasTrigger implements CmdTrigger {
 
         @Override
@@ -513,16 +532,6 @@ public class MainManager {
         public boolean trigger(final MainPack info, final String input) throws Exception {
             final String trimmed = input.trim();
             final String cmd = trimmed.split(" ")[0];
-
-            if (!BusyBoxInstaller.isInstalled(mContext)) {
-                String[] common = {"ping", "echo", "ls", "grep", "cat", "vi", "top", "ps", "ip"};
-                for (String c : common) {
-                    if (cmd.equalsIgnoreCase(c)) {
-                        Tuils.sendOutput(mContext, "Command not found. You can install BusyBox using: bbman -install", TerminalManager.CATEGORY_OUTPUT);
-                        return true;
-                    }
-                }
-            }
 
             new StoppableThread() {
                 @Override

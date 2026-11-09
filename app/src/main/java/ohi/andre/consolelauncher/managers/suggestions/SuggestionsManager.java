@@ -55,7 +55,6 @@ import ohi.andre.consolelauncher.managers.xml.options.Notifications;
 import ohi.andre.consolelauncher.managers.xml.options.Reply;
 import ohi.andre.consolelauncher.managers.xml.options.Rss;
 import ohi.andre.consolelauncher.managers.xml.options.Suggestions;
-import ohi.andre.consolelauncher.tuils.BusyBoxInstaller;
 import ohi.andre.consolelauncher.tuils.StoppableThread;
 import ohi.andre.consolelauncher.tuils.Tuils;
 
@@ -791,6 +790,19 @@ public class SuggestionsManager {
             case CommandAbstraction.THEME_PRESET:
                 suggestThemePresets(suggestions, afterLastSpace, beforeLastSpace);
                 break;
+            case CommandAbstraction.TEXTLIST:
+                if (beforeLastSpace != null && beforeLastSpace.trim().startsWith("macro")) {
+                    suggestMacroNames(suggestions, afterLastSpace, beforeLastSpace);
+                }
+                break;
+        }
+    }
+
+    private void suggestMacroNames(List<Suggestion> suggestions, String afterLastSpace, String beforeLastSpace) {
+        List<String> macroNames = ohi.andre.consolelauncher.managers.MacroSuggestionsProvider.INSTANCE.getMacroSuggestions(afterLastSpace != null ? afterLastSpace : "");
+        for (String mName : macroNames) {
+            String formattedName = mName.contains(" ") ? "\"" + mName + "\"" : mName;
+            suggestions.add(new Suggestion(beforeLastSpace, formattedName, false, Suggestion.TYPE_COMMAND));
         }
     }
 

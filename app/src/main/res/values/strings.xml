@@ -2,6 +2,8 @@
 
     <!-- various text -->
     <string name="app_name">T-UI</string>
+    <string name="help_macro">Trigger MacroDroid macro with variables.\nUsage: macro \"Macro Name\" var1=\"val\" var2=123</string>
+    <string name="help_history">View last 20 MacroDroid execution logs from SQLite storage.\nUsage: history [clear]</string>
     <string name="location_off">Turn on GPS</string>
     <string name="share_label">Share</string>
     <string name="output_about">Francesco Andreuzzi (Italy)\n\t-> Programmer
@@ -432,5 +434,4 @@
     </string>
 
     <string name="help_username">Change the username and device name: username [new_user] [new_device]</string>
-    <string name="help_bbman">-install -> download and setup BusyBox\n-remove -> uninstall BusyBox</string>
 </resources>
