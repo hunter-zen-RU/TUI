@@ -5,6 +5,38 @@ import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsElement;
 import ohi.andre.consolelauncher.managers.xml.classes.XMLPrefsSave;
 
 public enum Dashboard implements XMLPrefsSave {
+    dashboard_mode {
+        @Override
+        public String defaultValue() { return "grid"; }
+        @Override
+        public String type() { return XMLPrefsSave.TEXT; }
+        @Override
+        public String info() { return "Dashboard system mode: 'grid' (modern grid system) or 'native' (legacy list)."; }
+    },
+    enable_blur_effect {
+        @Override
+        public String defaultValue() { return "true"; }
+        @Override
+        public String type() { return XMLPrefsSave.BOOLEAN; }
+        @Override
+        public String info() { return "Enables frosted glass blur overlay effect on the floating grid dashboard."; }
+    },
+    use_grid_dashboard {
+        @Override
+        public String defaultValue() { return "true"; }
+        @Override
+        public String type() { return XMLPrefsSave.BOOLEAN; }
+        @Override
+        public String info() { return "If true, enables the professional Grid System Dashboard floating above output."; }
+    },
+    blur_effect {
+        @Override
+        public String defaultValue() { return "true"; }
+        @Override
+        public String type() { return XMLPrefsSave.BOOLEAN; }
+        @Override
+        public String info() { return "Enables translucent frosted glass overlay effect on the floating grid dashboard."; }
+    },
     dashboard_title {
         @Override
         public String defaultValue() { return "SYS_KERNEL_MATRIX"; }

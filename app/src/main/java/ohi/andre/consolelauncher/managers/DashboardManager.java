@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
@@ -41,11 +43,18 @@ public class DashboardManager {
     private final Context context;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
+    private View rootContainer;
+    private View gridWrapper;
+    private View nativeWrapper;
+
     private TextView titleTv;
     private TextView timeTv;
     private TextView dotTv;
 
     private GridLayout gridContainer;
+
+    private String dashboardMode = "grid";
+    private boolean enableBlur = true;
 
     private int rows = 2;
     private int cols = 2;
@@ -85,6 +94,10 @@ public class DashboardManager {
         this.context = context;
         if (rootView == null) return;
 
+        rootContainer = rootView.findViewById(R.id.dashboard_root_container);
+        gridWrapper = rootView.findViewById(R.id.dashboard_grid_wrapper);
+        nativeWrapper = rootView.findViewById(R.id.native_dashboard_wrapper);
+
         titleTv = rootView.findViewById(R.id.dashboard_title_tv);
         timeTv = rootView.findViewById(R.id.dashboard_time_tv);
         dotTv = rootView.findViewById(R.id.dashboard_dot_tv);
@@ -94,11 +107,19 @@ public class DashboardManager {
         memoryInfo = new ActivityManager.MemoryInfo();
 
         loadConfig();
-        setupGrid();
+        applyModeAndStyling();
+        if ("grid".equalsIgnoreCase(dashboardMode)) {
+            setupGrid();
+        }
     }
 
     private void loadConfig() {
         try {
+            dashboardMode = XMLPrefsManager.get(Dashboard.dashboard_mode);
+            if (dashboardMode == null || dashboardMode.isEmpty()) dashboardMode = "grid";
+
+            enableBlur = XMLPrefsManager.getBoolean(Dashboard.enable_blur_effect);
+
             String title = XMLPrefsManager.get(Dashboard.dashboard_title);
             if (titleTv != null && title != null && !title.isEmpty()) {
                 titleTv.setText(" " + title);
@@ -149,6 +170,56 @@ public class DashboardManager {
         }
     }
 
+    private void applyModeAndStyling() {
+        boolean isGrid = "grid".equalsIgnoreCase(dashboardMode);
+
+        if (gridWrapper != null) {
+            gridWrapper.setVisibility(isGrid ? View.VISIBLE : View.GONE);
+        }
+        if (nativeWrapper != null) {
+            nativeWrapper.setVisibility(isGrid ? View.GONE : View.VISIBLE);
+        }
+
+        if (gridWrapper != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                try {
+                    gridWrapper.setRenderEffect(null);
+                } catch (Exception ignored) {}
+            }
+
+            if (isGrid) {
+                // Apply Glassmorphism translucent background
+                GradientDrawable frostedGlassBackground = new GradientDrawable();
+                frostedGlassBackground.setColor(Color.parseColor("#D90B0F19")); // Translucent dark panel fill
+                frostedGlassBackground.setStroke(Tuils.dpToPx(context, 1), Color.parseColor("#6000FF66")); // Accent border
+                frostedGlassBackground.setCornerRadius(Tuils.dpToPx(context, 8));
+                gridWrapper.setBackground(frostedGlassBackground);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
+                    gridWrapper.setElevation(Tuils.dpToPx(context, 8));
+                }
+            }
+        }
+
+        // Clear any blur effect from the terminal output view
+        if (rootContainer != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                View terminalView = null;
+                View parentView = (View) rootContainer.getParent();
+                if (parentView != null) {
+                    terminalView = parentView.findViewById(R.id.terminal_view);
+                }
+                if (terminalView == null && rootContainer.getRootView() != null) {
+                    terminalView = rootContainer.getRootView().findViewById(R.id.terminal_view);
+                }
+
+                if (terminalView != null) {
+                    terminalView.setRenderEffect(null);
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+
     private void setupGrid() {
         if (gridContainer == null) return;
 
@@ -162,7 +233,7 @@ public class DashboardManager {
         Typeface monoTypeface = Tuils.getTypeface(context);
 
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-        int screenWidth = displayMetrics.widthPixels - Tuils.dpToPx(context, 20);
+        int screenWidth = displayMetrics.widthPixels - Tuils.dpToPx(context, 24);
         int cellWidth = (screenWidth / cols) - Tuils.dpToPx(context, 8);
 
         for (int i = 0; i < totalBoxes; i++) {
@@ -259,7 +330,9 @@ public class DashboardManager {
         public void run() {
             if (!isRunning) return;
 
-            updateDashboardData();
+            if ("grid".equalsIgnoreCase(dashboardMode)) {
+                updateDashboardData();
+            }
 
             if (handler != null) {
                 handler.postDelayed(this, refreshIntervalMs);

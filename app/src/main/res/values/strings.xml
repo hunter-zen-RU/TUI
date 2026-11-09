@@ -9,6 +9,9 @@
     <string name="help_schedule">Schedule actions using 5-field cron pattern with WorkManager.\nUsage:\nschedule -add \"*/15 * * * *\" [action]\nschedule -ls\nschedule -rm [tag]\nschedule -clear</string>
     <string name="help_notify">Post a system notification.\nUsage: notify \"[title]\" \"[message]\"</string>
     <string name="help_launch">Launch an app by package name or specific component.\nUsage: launch [package_name] [activity_name]</string>
+    <string name="help_dashboard">Manage dashboard display mode and configuration.\nUsage:\n$ dashboard -mode grid -> Switch to modern grid dashboard\n$ dashboard -mode native -> Switch to legacy list dashboard\n$ dashboard -toggle -> Toggle between grid and native modes\n$ dashboard -layout 2x2 -> Change grid layout (1x1 to 5x5)\n$ dashboard -file -> Open dashboard.xml</string>
+    <string name="help_toast">Display a system toast notification.\nUsage:\n$ toast [text] -> Show quick toast\n$ toast -long [text] -> Show long duration toast</string>
+    <string name="help_run">Execute a .tui automation script file.\nUsage:\n$ run [file.tui] -> Run .tui automation script containing commands, sleep, and actions</string>
     <string name="location_off">Turn on GPS</string>
     <string name="share_label">Share</string>
     <string name="output_about">Francesco Andreuzzi (Italy)\n\t-> Programmer

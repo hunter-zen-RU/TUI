@@ -126,6 +126,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LAUNCHER_APP" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.tui" />
+            </intent-filter>
         </activity>
 
         <receiver
@@ -228,6 +237,10 @@
                 <data
                     android:host="*"
                     android:pathPattern=".*\\.cfg"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.tui"
                     android:scheme="file" />
                 <data
                     android:host="*"
