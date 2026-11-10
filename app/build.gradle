@@ -57,6 +57,36 @@ android {
     lint {
         checkReleaseBuilds false
     }
+
+    // Configure ABI splits for different CPU architectures
+    splits {
+        abi {
+            enable true
+            reset()
+            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            universalApk true // Generates the combined fallback APK
+        }
+    }
+
+    // Automatically names APKs as: name-cpu_build-tag.apk
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            // 1. Base name for your application file
+            def appName = "consolelauncher"
+            
+            // 2. Detect the CPU target build type
+            def abiFilter = output.getFilter(com.android.build.OutputFile.ABI)
+            if (abiFilter == null) {
+                abiFilter = "universal"
+            }
+            
+            // 3. Fallback to versionName if GITHUB_REF_NAME property isn't explicitly passed
+            def tagVersion = project.hasProperty('GITHUB_REF_NAME') ? project.property('GITHUB_REF_NAME') : variant.versionName
+
+            // 4. Force structural name mapping format
+            outputFileName = "${appName}-${abiFilter}-${tagVersion}.apk"
+        }
+    }
 }
 
 dependencies {
