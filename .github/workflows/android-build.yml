@@ -94,7 +94,7 @@ jobs:
 *   **Release Tag:** \`${{ github.ref_name }}\`
 *   **Commit Reference:** \`${{ github.sha }}\`
 *   **Triggered By:** @\`${{ github.actor }}\`
-*   **Build Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+*   **Build Timestamp:** \$(date -u '+%Y-%m-%d %H:%M:%S UTC')
 *   **Pipeline Source:** [Job Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
 ---
@@ -105,13 +105,13 @@ This production-ready release contains separate APK variants optimized for disti
 
 | Variant Asset Name | Target Architecture | Build Size | SHA-256 Checksum Verification |
 | :--- | :--- | :--- | :--- |
-| \`${UNIVERSAL_NAME:-universal-release.apk}\` | All ABIs (Universal) | \`$(calc_size "$UNIVERSAL_NAME")\` | \`${calc_sha "$UNIVERSAL_NAME"}\` |
-| \`${ARM64_NAME:-arm64-v8a-release.apk}\` | Modern 64-bit ARM | \`$(calc_size "$ARM64_NAME")\` | \`${calc_sha "$ARM64_NAME"}\` |
-| \`${ARMV7_NAME:-armeabi-v7a-release.apk}\` | Legacy 32-bit ARM | \`$(calc_size "$ARMV7_NAME")\` | \`${calc_sha "$ARMV7_NAME"}\` |
-| \`${X86_NAME:-x86_64-release.apk}\` | 64-bit Intel/AMD Emulators | \`$(calc_size "$X86_NAME")\` | \`${calc_sha "$X86_NAME"}\` |
-| \`tui.apk\` | In-App System Overrides | \`$(calc_size "tui.apk")\` | \`${calc_sha "tui.apk"}\` |
+| \`${UNIVERSAL_NAME:-universal-release.apk}\` | All ABIs (Universal) | \`\$(calc_size "\$UNIVERSAL_NAME")\` | \`${calc_sha "$UNIVERSAL_NAME"}\` |
+| \`${ARM64_NAME:-arm64-v8a-release.apk}\` | Modern 64-bit ARM | \`\$(calc_size "\$ARM64_NAME")\` | \`${calc_sha "$ARM64_NAME"}\` |
+| \`${ARMV7_NAME:-armeabi-v7a-release.apk}\` | Legacy 32-bit ARM | \`\$(calc_size "\$ARMV7_NAME")\` | \`${calc_sha "$ARMV7_NAME"}\` |
+| \`${X86_NAME:-x86_64-release.apk}\` | 64-bit Intel/AMD Emulators | \`\$(calc_size "\$X86_NAME")\` | \`${calc_sha "$X86_NAME"}\` |
+| \`tui.apk\` | In-App System Overrides | \`\$(calc_size "tui.apk")\` | \`${calc_sha "tui.apk"}\` |
 
-> 💡 **Notice on `tui.apk`:** This asset is structurally identical to the Universal layout, tailored explicitly for downstream dynamic validation routines executed via the \`tui -app_update\` module interface.
+> 💡 **Notice on \`tui.apk\`:** This asset is structurally identical to the Universal layout, tailored explicitly for downstream dynamic validation routines executed via the \\\`tui -app_update\\\` module interface.
 EOF
 
         # Dynamically append New Features & Bug Fixes only if file exists and has content
@@ -140,7 +140,7 @@ For full update details, granular diffs, and precise commit history, please revi
 ### 📥 Deployment & Installation Guide
 
 1.  **Identify Architecture:** Determine your device's CPU architecture using an info app or the universal installer.
-2.  **Allow Unknown Sources:** Navigate to \`Settings\` > \`Security\` > \`Install Unknown Apps\` and enable permission for your browser/file manager.
+2.  **Allow Unknown Sources:** Navigate to \\\`Settings\\\` > \\\`Security\\\` > \\\`Install Unknown Apps\\\` and enable permission for your browser/file manager.
 3.  **Install:** Download the matching variant above and execute the package installer.
 EOF
 
