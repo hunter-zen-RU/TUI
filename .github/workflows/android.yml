@@ -57,6 +57,18 @@ jobs:
     - name: Extract Release Notes and Generate Checksums
       id: release_notes
       run: |
+        # Store absolute path to the changelog file before changing directories
+        CHANGELOG_PATH="$GITHUB_WORKSPACE/fix-bug.md"
+        CHANGELOG_CONTENT=""
+
+        # Check if the optional fix-bug.md exists in the root directory
+        if [ -f "$CHANGELOG_PATH" ]; then
+          echo "Found fix-bug.md! Reading changelog contents..."
+          CHANGELOG_CONTENT=$(cat "$CHANGELOG_PATH")
+        else
+          echo "fix-bug.md not found in root directory. Skipping inline changelog generation."
+        fi
+
         cd app/build/outputs/apk/release/
         
         # Core dynamic calculations for your artifact table
@@ -109,6 +121,21 @@ This production-ready release contains separate APK variants optimized for disti
 | \`tui.apk\` | In-App System Overrides | \`$(calc_size "tui.apk")\` | \`${calc_sha "tui.apk"}\` |
 
 > 💡 **Notice on `tui.apk`:** This asset is structurally identical to the Universal layout, tailored explicitly for downstream dynamic validation routines executed via the \`tui -app_update\` module interface.
+EOF
+
+        # Dynamically append New Features & Bug Fixes only if content exists
+        if [ -not -z "$CHANGELOG_CONTENT" ]; then
+          cat << EOF >> ../../../../../body.md
+
+---
+
+### ✨ New Features & Bug Fixes
+$CHANGELOG_CONTENT
+EOF
+        fi
+
+        # Complete the trailing documentation elements
+        cat << EOF >> ../../../../../body.md
 
 ---
 
