@@ -1321,6 +1321,7 @@ public class UIManager implements OnTouchListener {
         ImageButton nextView = null;
         ImageButton deleteView = null;
         ImageButton pasteView = null;
+        ImageButton micView = null;
 
         TextView ctrlView = null;
         TextView shiftView = null;
@@ -1341,6 +1342,7 @@ public class UIManager implements OnTouchListener {
             nextView = (ImageButton) inputOutputView.findViewById(R.id.next_view);
             deleteView = (ImageButton) inputOutputView.findViewById(R.id.delete_view);
             pasteView = (ImageButton) inputOutputView.findViewById(R.id.paste_view);
+            micView = (ImageButton) inputOutputView.findViewById(R.id.mic_view);
 
             ctrlView = (TextView) inputOutputView.findViewById(R.id.ctrl_view);
             shiftView = (TextView) inputOutputView.findViewById(R.id.shift_view);
@@ -1358,8 +1360,9 @@ public class UIManager implements OnTouchListener {
         }
 
         mTerminalAdapter = new TerminalManager(terminalView, inputView, prefixView, submitView, backView, nextView, deleteView, pasteView, context, mainPack, executer);
+        mainPack.terminal = mTerminalAdapter;
         if (showToolbar) {
-            mTerminalAdapter.setupExtraToolbarKeys(ctrlView, shiftView, altView, leftView, rightView);
+            mTerminalAdapter.setupExtraToolbarKeys(ctrlView, shiftView, altView, leftView, rightView, micView);
         }
 
         if (XMLPrefsManager.getBoolean(Suggestions.show_suggestions)) {

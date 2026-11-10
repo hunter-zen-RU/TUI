@@ -104,26 +104,73 @@ public class tui extends ParamCommand {
             public int[] args() { return new int[0]; }
             @Override
             public String exec(ExecutePack pack) {
-                Tuils.sendOutput(pack.context, "Checking for TUI app update...");
+                String primaryAbi = PackageManager.getPrimaryAbi();
+                Tuils.sendOutput(pack.context, "Checking for TUI update (Device ABI: " + primaryAbi + ")...");
                 PackageManager.fetchRepoIndex(pack.context, new PackageManager.RepoCallback() {
                     @Override
                     public void onSuccess(List<PackageManager.PackageInfo> packages) {
+                        PackageManager.PackageInfo target = null;
+                        // 1. Check for ABI specific entry, e.g. "tui-app-arm64-v8a" or abi property
                         for (PackageManager.PackageInfo p : packages) {
-                            if ("tui-app".equalsIgnoreCase(p.name)) {
-                                Tuils.sendOutput(pack.context, "Updating TUI app...");
-                                PackageManager.installPackage(pack.context, p.name, new PackageManager.InstallCallback() {
-                                    @Override
-                                    public void onSuccess(String message) { Tuils.sendOutput(pack.context, "App updated. Please restart T-UI."); }
-                                    @Override
-                                    public void onError(String error) { Tuils.sendOutput(android.graphics.Color.RED, pack.context, "App update failed: " + error); }
-                                });
-                                return;
+                            if (p.name.equalsIgnoreCase("tui-app-" + primaryAbi) ||
+                                ("tui-app".equalsIgnoreCase(p.name) && primaryAbi.equalsIgnoreCase(p.abi))) {
+                                target = p;
+                                break;
                             }
+                        }
+                        // 2. Fallback to generic "tui-app"
+                        if (target == null) {
+                            for (PackageManager.PackageInfo p : packages) {
+                                if ("tui-app".equalsIgnoreCase(p.name)) {
+                                    target = p;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (target != null) {
+                            final PackageManager.PackageInfo chosen = target;
+                            Tuils.sendOutput(pack.context, "Found update: " + chosen.name + " (" + chosen.version + ")" + (chosen.abi != null && !chosen.abi.isEmpty() ? " [" + chosen.abi + "]" : ""));
+                            PackageManager.installPackage(pack.context, chosen.name, new PackageManager.InstallCallback() {
+                                @Override
+                                public void onSuccess(String message) { Tuils.sendOutput(pack.context, "Package installer initiated. Please complete installation."); }
+                                @Override
+                                public void onError(String error) { Tuils.sendOutput(android.graphics.Color.RED, pack.context, "App update failed: " + error); }
+                            });
+                            return;
                         }
                         Tuils.sendOutput(pack.context, "No TUI app update found.");
                     }
                     @Override
                     public void onError(String error) { Tuils.sendOutput(android.graphics.Color.RED, pack.context, "Update check failed: " + error); }
+                });
+                return null;
+            }
+        },
+        check_update {
+            @Override
+            public int[] args() { return new int[0]; }
+            @Override
+            public String exec(ExecutePack pack) {
+                String primaryAbi = PackageManager.getPrimaryAbi();
+                Tuils.sendOutput(pack.context, "Scanning repository for TUI releases (ABI: " + primaryAbi + ")...");
+                PackageManager.fetchRepoIndex(pack.context, new PackageManager.RepoCallback() {
+                    @Override
+                    public void onSuccess(List<PackageManager.PackageInfo> packages) {
+                        boolean found = false;
+                        for (PackageManager.PackageInfo p : packages) {
+                            if (p.name.startsWith("tui-app")) {
+                                Tuils.sendOutput(pack.context, "• " + p.name + " v" + p.version + " (" + (p.abi != null && !p.abi.isEmpty() ? p.abi : "universal") + ")");
+                                if (p.sha256 != null && !p.sha256.isEmpty()) {
+                                    Tuils.sendOutput(pack.context, "  SHA-256: " + p.sha256);
+                                }
+                                found = true;
+                            }
+                        }
+                        if (!found) Tuils.sendOutput(pack.context, "No TUI releases indexed in repository.");
+                    }
+                    @Override
+                    public void onError(String error) { Tuils.sendOutput(android.graphics.Color.RED, pack.context, "Check failed: " + error); }
                 });
                 return null;
             }

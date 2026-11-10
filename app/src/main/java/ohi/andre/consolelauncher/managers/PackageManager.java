@@ -10,12 +10,14 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,9 +34,11 @@ public class PackageManager {
         public String name;
         public String version;
         public String description;
-        public String type; // "tui", "bin", "script"
+        public String type; // "tui", "bin", "script", "apk"
         public String url;
         public String targetName;
+        public String sha256;
+        public String abi;
         public List<String> dependencies = new ArrayList<>();
     }
 
@@ -110,6 +114,8 @@ public class PackageManager {
                         pkg.type = obj.optString("type", "tui");
                         pkg.url = obj.optString("url", "");
                         pkg.targetName = obj.optString("target", pkg.name);
+                        pkg.sha256 = obj.optString("sha256", obj.optString("checksum", ""));
+                        pkg.abi = obj.optString("abi", "");
                         JSONArray deps = obj.optJSONArray("dependencies");
                         if (deps != null) {
                             pkg.dependencies = new ArrayList<>();
@@ -131,6 +137,13 @@ public class PackageManager {
                         pkg.type = obj.optString("type", "tui");
                         pkg.url = obj.optString("url", "");
                         pkg.targetName = obj.optString("target", pkg.name);
+                        pkg.sha256 = obj.optString("sha256", obj.optString("checksum", ""));
+                        pkg.abi = obj.optString("abi", "");
+                        JSONArray deps = obj.optJSONArray("dependencies");
+                        if (deps != null) {
+                            pkg.dependencies = new ArrayList<>();
+                            for (int j = 0; j < deps.length(); j++) pkg.dependencies.add(deps.getString(j));
+                        }
                         list.add(pkg);
                     }
                 }
@@ -139,6 +152,34 @@ public class PackageManager {
             Tuils.log(e);
         }
         return list;
+    }
+
+    public static String getPrimaryAbi() {
+        if (Build.SUPPORTED_ABIS != null && Build.SUPPORTED_ABIS.length > 0) {
+            return Build.SUPPORTED_ABIS[0];
+        }
+        return "universal";
+    }
+
+    public static String computeFileSha256(File file) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            FileInputStream fis = new FileInputStream(file);
+            byte[] byteArray = new byte[8192];
+            int bytesCount;
+            while ((bytesCount = fis.read(byteArray)) != -1) {
+                digest.update(byteArray, 0, bytesCount);
+            }
+            fis.close();
+            byte[] bytes = digest.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     public static void installPackage(final Context context, final String packageName, final InstallCallback callback) {
@@ -247,6 +288,22 @@ public class PackageManager {
                 output.flush();
                 output.close();
                 input.close();
+
+                // Checksum calculation and verification
+                String computedHash = computeFileSha256(destFile);
+                if (computedHash != null && !computedHash.isEmpty()) {
+                    Tuils.sendOutput(context, "SHA-256: " + computedHash);
+                }
+                if (pkg.sha256 != null && !pkg.sha256.trim().isEmpty()) {
+                    if (!computedHash.equalsIgnoreCase(pkg.sha256.trim())) {
+                        destFile.delete();
+                        Tuils.sendOutput(Color.RED, context, "Security Alert: SHA-256 checksum mismatch!");
+                        if (callback != null) callback.onError("SHA-256 mismatch! Expected: " + pkg.sha256 + ", got: " + computedHash);
+                        return;
+                    } else {
+                        Tuils.sendOutput(context, "✓ Checksum verification passed.");
+                    }
+                }
 
                 // Create shim if needed
                 if ("apk".equalsIgnoreCase(pkg.type)) {

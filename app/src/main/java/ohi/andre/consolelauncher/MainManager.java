@@ -445,6 +445,12 @@ public class MainManager {
     private class MacroTrigger implements CmdTrigger {
         @Override
         public boolean trigger(MainPack info, String input) throws Exception {
+            // Check if recording is active, capture input unless it's a macro management command
+            ohi.andre.consolelauncher.managers.MacroEngine macroEngine = ohi.andre.consolelauncher.managers.MacroEngine.Companion.getInstance(info.context);
+            if (macroEngine.isRecording()) {
+                macroEngine.recordCommand(input);
+            }
+
             HybridCommandInterpreter interpreter = new HybridCommandInterpreter(info.context, info);
             HybridCommandInterpreter.CommandResult result = interpreter.handleInput(input);
             if (result instanceof HybridCommandInterpreter.CommandResult.Scheduled) {
@@ -459,10 +465,12 @@ public class MainManager {
                 return true;
             } else if (result instanceof HybridCommandInterpreter.CommandResult.MacroTriggered) {
                 HybridCommandInterpreter.CommandResult.MacroTriggered macroRes = (HybridCommandInterpreter.CommandResult.MacroTriggered) result;
-                if (macroRes.getIntentSent()) {
-                    Tuils.sendOutput(mContext, "MacroDroid: Triggered \"" + macroRes.getMacroName() + "\" (" + macroRes.getVariables().size() + " vars)");
-                } else {
-                    Tuils.sendOutput(mContext, "MacroDroid: Failed to send intent for \"" + macroRes.getMacroName() + "\"");
+                if (!macroEngine.hasMacro(macroRes.getMacroName())) {
+                    if (macroRes.getIntentSent()) {
+                        Tuils.sendOutput(mContext, "Macro: Triggered \"" + macroRes.getMacroName() + "\" (" + macroRes.getVariables().size() + " vars)");
+                    } else {
+                        Tuils.sendOutput(mContext, "Macro: Failed to dispatch \"" + macroRes.getMacroName() + "\"");
+                    }
                 }
                 return true;
             }
@@ -583,6 +591,32 @@ public class MainManager {
         @Override
         public boolean trigger(final MainPack info, final String input) throws Exception {
 
+            if (input != null && input.contains("|")) {
+                String[] stages = input.split("\\|");
+                if (stages.length > 1) {
+                    final Command firstCmd = CommandTuils.parse(stages[0].trim(), info);
+                    if (firstCmd != null) {
+                        mainPack.lastCommand = input;
+                        new StoppableThread() {
+                            @Override
+                            public void run() {
+                                super.run();
+                                try {
+                                    String result = processPipeline(info, input);
+                                    if (result != null && !result.isEmpty()) {
+                                        Tuils.sendOutput(info, result, TerminalManager.CATEGORY_OUTPUT);
+                                    }
+                                } catch (Exception e) {
+                                    Tuils.sendOutput(mContext, Tuils.getStackTrace(e));
+                                    Tuils.log(e);
+                                }
+                            }
+                        }.start();
+                        return true;
+                    }
+                }
+            }
+
             final Command command = CommandTuils.parse(input, info);
             if(command == null) {
                 android.util.Log.d("MainManager", "Command not parsed: " + input);
@@ -625,6 +659,121 @@ public class MainManager {
             }.start();
 
             return true;
+        }
+
+        private String processPipeline(MainPack info, String rawInput) throws Exception {
+            String[] stages = rawInput.split("\\|");
+            if (stages.length <= 1) return null;
+
+            String firstCmdStr = stages[0].trim();
+            Command firstCommand = CommandTuils.parse(firstCmdStr, info);
+            if (firstCommand == null) return null;
+
+            Object resultObj = firstCommand.exec(info);
+            String currentOutput = "";
+            if (resultObj instanceof String) currentOutput = (String) resultObj;
+            else if (resultObj instanceof List) currentOutput = Tuils.toPlanString((List) resultObj, "\n");
+            else if (resultObj instanceof CharSequence) currentOutput = ((CharSequence) resultObj).toString();
+            else if (resultObj != null) currentOutput = String.valueOf(resultObj);
+
+            for (int i = 1; i < stages.length; i++) {
+                String stage = stages[i].trim();
+                if (stage.isEmpty()) continue;
+                currentOutput = applyPipeFilter(currentOutput, stage);
+            }
+
+            return currentOutput;
+        }
+
+        private String applyPipeFilter(String text, String filterCmd) {
+            if (text == null) text = "";
+            String[] tokens = filterCmd.trim().split("\\s+");
+            if (tokens.length == 0 || tokens[0].isEmpty()) return text;
+            String filterName = tokens[0].toLowerCase();
+
+            String[] lines = text.split("\r?\n");
+
+            if (filterName.equals("grep")) {
+                boolean ignoreCase = true;
+                boolean invert = false;
+                String pattern = "";
+                for (int i = 1; i < tokens.length; i++) {
+                    if (tokens[i].equals("-v")) invert = true;
+                    else if (tokens[i].equals("-i")) ignoreCase = true;
+                    else if (tokens[i].equals("-s")) ignoreCase = false;
+                    else pattern = tokens[i];
+                }
+                if (pattern.isEmpty()) return text;
+                StringBuilder sb = new StringBuilder();
+                for (String line : lines) {
+                    boolean match;
+                    if (ignoreCase) {
+                        match = line.toLowerCase().contains(pattern.toLowerCase());
+                    } else {
+                        match = line.contains(pattern);
+                    }
+                    if (invert) match = !match;
+                    if (match) {
+                        if (sb.length() > 0) sb.append("\n");
+                        sb.append(line);
+                    }
+                }
+                return sb.toString();
+            } else if (filterName.equals("head")) {
+                int count = 10;
+                if (tokens.length > 1) {
+                    try { count = Integer.parseInt(tokens[1]); } catch (Exception ignored) {}
+                }
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < Math.min(lines.length, count); i++) {
+                    if (i > 0) sb.append("\n");
+                    sb.append(lines[i]);
+                }
+                return sb.toString();
+            } else if (filterName.equals("tail")) {
+                int count = 10;
+                if (tokens.length > 1) {
+                    try { count = Integer.parseInt(tokens[1]); } catch (Exception ignored) {}
+                }
+                int start = Math.max(0, lines.length - count);
+                StringBuilder sb = new StringBuilder();
+                for (int i = start; i < lines.length; i++) {
+                    if (sb.length() > 0) sb.append("\n");
+                    sb.append(lines[i]);
+                }
+                return sb.toString();
+            } else if (filterName.equals("sort")) {
+                boolean reverse = tokens.length > 1 && tokens[1].equals("-r");
+                java.util.List<String> list = new java.util.ArrayList<>(java.util.Arrays.asList(lines));
+                java.util.Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
+                if (reverse) java.util.Collections.reverse(list);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < list.size(); i++) {
+                    if (i > 0) sb.append("\n");
+                    sb.append(list.get(i));
+                }
+                return sb.toString();
+            } else if (filterName.equals("wc")) {
+                int lineCount = lines.length;
+                int wordCount = 0;
+                for (String line : lines) {
+                    String trimmed = line.trim();
+                    if (!trimmed.isEmpty()) {
+                        wordCount += trimmed.split("\\s+").length;
+                    }
+                }
+                int charCount = text.length();
+                if (tokens.length > 1 && tokens[1].equals("-l")) return String.valueOf(lineCount);
+                if (tokens.length > 1 && tokens[1].equals("-w")) return String.valueOf(wordCount);
+                if (tokens.length > 1 && tokens[1].equals("-c")) return String.valueOf(charCount);
+                return lineCount + " lines, " + wordCount + " words, " + charCount + " chars";
+            } else if (filterName.equals("upper")) {
+                return text.toUpperCase();
+            } else if (filterName.equals("lower")) {
+                return text.toLowerCase();
+            }
+
+            return text;
         }
     }
 

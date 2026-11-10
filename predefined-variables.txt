@@ -36,6 +36,15 @@ These variables are automatically resolved by the T-UI engine at runtime. You ca
 | `{{date}}` | Current date (YYYY-MM-DD) | `2024-11-09` |
 | `{{time}}` | Current time (HH:mm:ss) | `14:30:05` |
 
+## 🎵 Media Playback Telemetry
+
+| Variable | Description | Example Output |
+| :--- | :--- | :--- |
+| `{{media_track}}` | Currently playing music track title | `Midnight City` |
+| `{{media_artist}}` | Currently playing music artist | `M83` |
+| `{{media_album}}` | Currently playing album name | `Hurry Up, We're Dreaming` |
+| `{{media_playback_state}}` | Current playback state | `Playing` or `Paused` |
+
 ---
 
 ## 🛠 Usage Examples

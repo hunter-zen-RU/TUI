@@ -160,3 +160,62 @@ Write and execute powerful automation workflows.
     *   Installed Android applications.
     *   **Packages** installed via `pkg` (both scripts and native binaries).
     *   Files and directories in the current working directory.
+
+### 📊 System Telemetry & ASCII Visualizer (`sys`)
+View real-time system metrics, hardware architecture, and ASCII graphs directly in your terminal:
+*   `sys`: Comprehensive hardware, architecture, Android OS, and storage overview.
+*   `sys -graph`: Live ASCII bar graphs for CPU, RAM, Disk, and Battery:
+    ```text
+    CPU  [████████░░░░░░░░░░░░] 38%
+    RAM  [████████████░░░░░░░░] 53% (3.2G / 6.0G)
+    DISK [██████████████░░░░░░] 68% (84G / 128G)
+    BATT [████████████████████] 95% ⚡ Charging
+    ```
+*   `sys -battery`: Detailed battery health, temp (°C), voltage (mV), and power source.
+*   `sys -net`: Network stats, SSID, link speed, and data transfer counters.
+*   `sys -storage`: Internal and partition storage usage.
+
+### 🔗 Unix Pipes & Filters (`|`)
+Chain commands together using the standard Unix pipe syntax:
+*   `apps -ls | grep Google` -> Filter installed apps matching a query.
+*   `history | tail 5` -> Display the last 5 executed commands.
+*   `variables -ls | grep battery` -> Search across predefined/custom variables.
+*   `plugin -ls | sort` -> Alphabetically sort installed plugin list.
+*   `notes -ls | wc -l` -> Count note entries.
+*   Supported filters: `grep [-i|-v]`, `head [n]`, `tail [n]`, `sort [-r]`, `wc [-l|-w|-c]`, `upper`, `lower`.
+
+### 🎨 Developer Colorway Theme Presets (`theme`)
+Switch seamlessly between iconic developer and hacker colorways:
+*   `theme -ls`: List all presets with color breakdown.
+*   `theme -preset matrix`: Classic phosphor green on deep obsidian black.
+*   `theme -preset dracula`: Renowned Dracula violet, pink, and cyan palette.
+*   `theme -preset catppuccin`: Modern warm pastel mocha aesthetic.
+*   `theme -preset nord`: Clean Arctic frost blue and snow palette.
+*   `theme -preset gruvbox`: Retro warm groove contrast palette.
+*   `theme -preset cyberpunk`: Neon yellow, bright cyan, and laser red.
+
+### 🎵 Media Session Telemetry & Controls (`music`)
+*   `music -now`: Renders a rich ASCII music player with track, artist, and timeline:
+    ```text
+    🎵 Midnight City - M83
+    ▶ Playing [━━━━●━━━━━━━━━━━━] 1:24 / 4:03 (35%)
+    ```
+*   `music -toggle`: Toggle playback instantly.
+*   New dynamic variables: `{{media_track}}`, `{{media_artist}}`, `{{media_album}}`, `{{media_playback_state}}`.
+
+### 🛡️ Architecture-Aware App Updater & Verifier (`tui`)
+*   `tui -check_update`: Scans the repository for available T-UI releases tailored to your CPU architecture (`arm64-v8a`, `armeabi-v7a`, `x86_64`, `universal`).
+*   `tui -update_app`: Automatically detects device ABI, downloads matching APK with live progress, verifies the **SHA-256 checksum**, and launches the Android package installer.
+
+### 🎙️ Hands-Free Voice-to-Text Input (`voice`)
+Dictate and execute commands completely hands-free using Android's `SpeechRecognizer`:
+*   `voice`: Initiates speech recognition in the terminal with live partial transcription and automatic execution on completion.
+*   **Microphone Toolbar Button**: Tap the new 🎙️ button on the bottom toolbar to speak immediately.
+*   **Long-Press Shortcuts**: Long-press the Enter button (`ic_enter`) or the command prefix (`$` / `>`) to start voice dictation with long-press haptic feedback.
+
+### 📳 Tactile Haptic Feedback
+Enhanced physical sensation across all terminal interactions:
+*   **Key Typing**: Tactile tick (`HapticFeedbackConstants.KEYBOARD_TAP`) on every character typed or deleted.
+*   **Virtual Keys & Navigation**: Crisp feedback (`HapticFeedbackConstants.VIRTUAL_KEY`) on Enter, D-Pad Up/Down history cycling, and cursor arrows.
+*   **Command Execution**: Confirmation pulse (`HapticFeedbackConstants.CONFIRM`) on command execution.
+*   **Long-Press Gestures**: Strong haptic signal (`HapticFeedbackConstants.LONG_PRESS`) on voice shortcuts and context actions.

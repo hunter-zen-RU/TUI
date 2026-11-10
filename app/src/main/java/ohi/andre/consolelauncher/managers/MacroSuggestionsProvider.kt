@@ -41,11 +41,20 @@ object MacroSuggestionsProvider {
     /**
      * Filter macro name suggestions based on user prefix query
      */
-    fun getMacroSuggestions(query: String): List<String> {
+    @JvmOverloads
+    fun getMacroSuggestions(query: String, context: Context? = null): List<String> {
+        if (context != null) {
+            try {
+                val engineMacros = MacroEngine.getInstance(context).getAllMacros()
+                engineMacros.forEach { registeredMacros.add(it.name) }
+            } catch (e: Exception) {
+                // Ignore fallback to registered
+            }
+        }
         val cleanQuery = query.trim().lowercase()
         if (cleanQuery.isEmpty()) {
-            return registeredMacros.toList()
+            return registeredMacros.toList().sorted()
         }
-        return registeredMacros.filter { it.lowercase().startsWith(cleanQuery) || it.lowercase().contains(cleanQuery) }
+        return registeredMacros.filter { it.lowercase().startsWith(cleanQuery) || it.lowercase().contains(cleanQuery) }.sorted()
     }
 }

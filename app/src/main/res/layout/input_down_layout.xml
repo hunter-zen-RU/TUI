@@ -57,6 +57,11 @@
                 style="@style/ToolsBarButton"
                 android:src="@drawable/ic_paste"/>
 
+            <ImageButton android:id="@+id/mic_view"
+                style="@style/ToolsBarButton"
+                android:src="@drawable/ic_mic"
+                android:contentDescription="Voice Input"/>
+
             <TextView android:id="@+id/ctrl_view"
                 style="@style/ToolsTextButton"
                 android:text="CTRL"/>

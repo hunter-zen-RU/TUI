@@ -76,6 +76,10 @@ public class VariablesManager {
         PREDEFINED_VARIABLES.add(new PredefinedVar("network_name", "{{network_name}}", "STRING", "SSID (WiFi) or Subtype (Mobile)"));
         PREDEFINED_VARIABLES.add(new PredefinedVar("network_upload", "{{network_upload}}", "STRING", "Total data uploaded since boot"));
         PREDEFINED_VARIABLES.add(new PredefinedVar("network_download", "{{network_download}}", "STRING", "Total data downloaded since boot"));
+        PREDEFINED_VARIABLES.add(new PredefinedVar("media_track", "{{media_track}}", "STRING", "Currently playing music track title"));
+        PREDEFINED_VARIABLES.add(new PredefinedVar("media_artist", "{{media_artist}}", "STRING", "Currently playing music artist"));
+        PREDEFINED_VARIABLES.add(new PredefinedVar("media_album", "{{media_album}}", "STRING", "Currently playing album name"));
+        PREDEFINED_VARIABLES.add(new PredefinedVar("media_playback_state", "{{media_playback_state}}", "STRING", "Playback state (Playing/Paused/Stopped)"));
         PREDEFINED_VARIABLES.add(new PredefinedVar("date", "{{date}}", "STRING", "Current date (YYYY-MM-DD)"));
         PREDEFINED_VARIABLES.add(new PredefinedVar("time", "{{time}}", "STRING", "Current time (HH:mm:ss)"));
     }
@@ -417,6 +421,24 @@ public class VariablesManager {
                 return Tuils.formatSize(TrafficStats.getTotalTxBytes(), Tuils.MEGA) + "MB";
             case "network_download":
                 return Tuils.formatSize(TrafficStats.getTotalRxBytes(), Tuils.MEGA) + "MB";
+            case "media_track":
+                String track = getVariable("current_media_track");
+                return (track != null && !track.trim().isEmpty()) ? track : "No track playing";
+            case "media_artist":
+                String artist = getVariable("current_media_artist");
+                return (artist != null && !artist.trim().isEmpty()) ? artist : "Unknown artist";
+            case "media_album":
+                String album = getVariable("current_media_album");
+                return (album != null && !album.trim().isEmpty()) ? album : "Unknown album";
+            case "media_playback_state":
+                if (context != null) {
+                    try {
+                        android.media.AudioManager am = (android.media.AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+                        if (am != null && am.isMusicActive()) return "Playing";
+                    } catch (Exception ignored) {}
+                }
+                String state = getVariable("current_media_state");
+                return (state != null && !state.trim().isEmpty()) ? state : "Stopped";
             default:
                 return "";
         }

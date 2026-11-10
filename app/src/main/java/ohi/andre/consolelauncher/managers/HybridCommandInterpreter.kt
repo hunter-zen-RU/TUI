@@ -139,7 +139,7 @@ class HybridCommandInterpreter(
             }
         }
 
-        // 2. MacroDroid Execution check
+        // 2. Macro Engine Execution check
         val macroMatcher = MACRO_PATTERN.matcher(trimmedInput)
         if (macroMatcher.matches()) {
             val rawMacroName = macroMatcher.group(1) ?: ""
@@ -152,8 +152,21 @@ class HybridCommandInterpreter(
             }
 
             val variables = parseVariables(rawVars)
-            val success = fireMacroDroidIntent(macroName, variables)
-            return CommandResult.MacroTriggered(macroName, variables, success)
+            val engine = MacroEngine.getInstance(context)
+            if (engine.hasMacro(macroName)) {
+                val success = engine.executeMacro(
+                    macroName = macroName,
+                    namedVariables = variables,
+                    onOutput = { msg ->
+                        Tuils.sendOutput(context, msg)
+                    }
+                )
+                return CommandResult.MacroTriggered(macroName, variables, success)
+            } else {
+                // If not in local macros.json, attempt broadcast to external automation or MacroDroid fallback
+                val success = fireMacroDroidIntent(macroName, variables)
+                return CommandResult.MacroTriggered(macroName, variables, success)
+            }
         }
 
         // 3. Live Actions Check (sms, launch, notify)

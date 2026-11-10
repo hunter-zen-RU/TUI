@@ -22,16 +22,16 @@ public class history implements CommandAbstraction {
 
         if (argsString != null && argsString.trim().equalsIgnoreCase("clear")) {
             dbHelper.clearHistory();
-            return "MacroDroid execution history cleared.";
+            return "Macro execution history cleared.";
         }
 
         List<MacroHistoryDbHelper.MacroLogEntry> history = dbHelper.getRecentHistory(20);
         if (history == null || history.isEmpty()) {
-            return "No MacroDroid execution history found.";
+            return "No macro execution history found.";
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("--- MacroDroid Execution Log (Last ").append(history.size()).append(") ---\n");
+        sb.append("--- Macro Automation History (Last ").append(history.size()).append(") ---\n");
         for (MacroHistoryDbHelper.MacroLogEntry entry : history) {
             sb.append("[").append(entry.formattedTime()).append("] ")
               .append("\"").append(entry.getMacroName()).append("\" ")

@@ -2,8 +2,8 @@
 
     <!-- various text -->
     <string name="app_name">T-UI</string>
-    <string name="help_macro">Trigger MacroDroid macro with variables.\nUsage: macro \"Macro Name\" var1=\"val\" var2=123</string>
-    <string name="help_history">View last 20 MacroDroid execution logs from SQLite storage.\nUsage: history [clear]</string>
+    <string name="help_macro">Inbuilt macro automation engine.\nUsage:\n  macro -rec &lt;name&gt; [desc] : Record terminal commands\n  macro -stop : Save recording\n  macro -cancel : Cancel recording\n  macro -ls : List all macros\n  macro -info &lt;name&gt; : View macro details\n  macro -run &lt;name&gt; [args...] : Execute macro\n  macro -rm &lt;name&gt; : Delete macro\n  macro -file : Path to macros.json</string>
+    <string name="help_history">View last 20 macro execution history entries from SQLite storage.\nUsage: history [clear]</string>
     <string name="help_termux">Manage Termux shell sessions.\nUsage:\ntermux login -> Start interactive shell session\ntermux status -> Display shell availability &amp; environment</string>
     <string name="help_shell">Execute a shell command directly bypassing interpreter.\nUsage: shell [command]</string>
     <string name="help_schedule">Schedule actions using 5-field cron pattern with WorkManager.\nUsage:\nschedule -add \"*/15 * * * *\" [action]\nschedule -ls\nschedule -rm [tag]\nschedule -clear</string>
@@ -20,6 +20,8 @@
     <string name="help_ai">Gemini AI integration.\nUsage:\n$ ai [prompt] -> Ask Gemini a question\n$ ai -key [apikey] -> Set Gemini API key\n$ ai -test -> Test AI connection\n$ ai -set [prompt] [variable] -> Store AI response in a variable\n$ ai -sys [prompt] -> Update system prompt</string>
     <string name="help_api_cmd">API key management.\nUsage:\n$ api -key [apikey] -> Set Gemini API key</string>
     <string name="help_plugin">Plugin manager and code studio for modular T-UI extensions.\nUsage:\n$ plugin -ls -> List installed plugins\n$ plugin -info [id] -> Show plugin details and manifest\n$ plugin -launch [id] [args] -> Launch/execute a plugin\n$ plugin -studio -> Open GUI Plugin Code Studio\n$ plugin -create [id] [template] -> Create plugin scaffold\n$ plugin -templates -> Browse online templates from repository\n$ plugin -install [url|zip] -> Install plugin from ZIP or URL\n$ plugin -export [id] -> Package plugin as ZIP\n$ plugin -rm [id] -> Uninstall plugin</string>
+    <string name="help_sys">System telemetry, architecture info, and ASCII visualizers.\nUsage:\n$ sys -> Display system overview and architecture\n$ sys -graph -> Render live ASCII progress graphs (CPU, RAM, Disk, Battery)\n$ sys -battery -> Detailed battery health, temp, and power source\n$ sys -net -> Network stats, speed, and bandwidth counters\n$ sys -storage -> Internal and external storage partitions</string>
+    <string name="help_voice">Hands-free voice recognition input using Android SpeechRecognizer.\nUsage:\n$ voice -> Start speech recognition to dictate and execute commands hands-free\nTip: You can also tap the microphone icon on the toolbar or long-press the enter button.</string>
     <string name="location_off">Turn on GPS</string>
     <string name="share_label">Share</string>
     <string name="output_about">Francesco Andreuzzi (Italy)\n\t-> Programmer
