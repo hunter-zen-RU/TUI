@@ -17,7 +17,6 @@ jobs:
 
     - name: Download Existing Release Assets for Calculations
       run: |
-        # Download files to compute actual sizes and cryptographic signatures
         mkdir -p release_assets
         cd release_assets
         gh release download "${{ github.event.release.tag_name || github.ref_name }}" --pattern "*.apk" --clobber || true
@@ -62,15 +61,14 @@ jobs:
         TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
         TARGET_TAG="${{ github.event.release.tag_name || github.ref_name }}"
 
-        # Write safely using literal string protection
         cat << 'EOF' > ../body.md
 ### 🚀 Automated Build Details
 
-*   **Release Tag:** `@TAG_NAME@`
-*   **Commit Reference:** `@COMMIT_SHA@`
-*   **Triggered By:** @@ACTOR@
-*   **Build Timestamp:** @TIMESTAMP@
-*   **Pipeline Source:** [Job Run](@SERVER_URL@/@REPOSITORY@/actions/runs/@RUN_ID@)
+*   **Release Tag:** `__TAG_NAME__`
+*   **Commit Reference:** `__COMMIT_SHA__`
+*   **Triggered By:** @`__ACTOR__`
+*   **Build Timestamp:** __TIMESTAMP__
+*   **Pipeline Source:** [Job Run](__SERVER_URL__/__REPOSITORY__/actions/runs/__RUN_ID__)
 
 ---
 
@@ -80,36 +78,36 @@ This production-ready release contains separate APK variants optimized for disti
 
 | Variant Asset Name | Target Architecture | Build Size | SHA-256 Checksum Verification |
 | :--- | :--- | :--- | :--- |
-| `@UNIV_STR@` | All ABIs (Universal) | `@UNIV_SIZE@` | `@UNIV_SHA@` |
-| `@ARM64_STR@` | Modern 64-bit ARM | `@ARM64_SIZE@` | `@ARM64_SHA@` |
-| `@ARMV7_STR@` | Legacy 32-bit ARM | `@ARMV7_SIZE@` | `@ARMV7_SHA@` |
-| `@X86_STR@` | 64-bit Intel/AMD Emulators | `@X86_SIZE@` | `@X86_SHA@` |
-| `tui.apk` | In-App System Overrides | `@TUI_SIZE@` | `@TUI_SHA@` |
+| `__UNIV_STR__` | All ABIs (Universal) | `__UNIV_SIZE__` | `__UNIV_SHA__` |
+| `__ARM64_STR__` | Modern 64-bit ARM | `__ARM64_SIZE__` | `__ARM64_SHA__` |
+| `__ARMV7_STR__` | Legacy 32-bit ARM | `__ARMV7_SIZE__` | `__ARMV7_SHA__` |
+| `__X86_STR__` | 64-bit Intel/AMD Emulators | `__X86_SIZE__` | `__X86_SHA__` |
+| `tui.apk` | In-App System Overrides | `__TUI_SIZE__` | `__TUI_SHA__` |
 
 > 💡 **Notice on `tui.apk`:** This asset is structurally identical to the Universal layout, tailored explicitly for downstream dynamic validation routines executed via the `tui -app_update` module interface.
 EOF
 
-        sed -i "s|@TAG_NAME@|${TARGET_TAG}|g" ../body.md
-        sed -i "s|@COMMIT_SHA@|${{ github.sha }}|g" ../body.md
-        sed -i "s|@ACTOR@|${{ github.actor }}|g" ../body.md
-        sed -i "s|@TIMESTAMP@|${TIMESTAMP}|g" ../body.md
-        sed -i "s|@SERVER_URL@|${{ github.server_url }}|g" ../body.md
-        sed -i "s|@REPOSITORY@|${{ github.repository }}|g" ../body.md
-        sed -i "s|@RUN_ID@|${{ github.run_id }}|g" ../body.md
-        sed -i "s|@UNIV_STR@|${UNIV_STR}|g" ../body.md
-        sed -i "s|@UNIV_SIZE@|${UNIV_SIZE}|g" ../body.md
-        sed -i "s|@UNIV_SHA@|${UNIV_SHA}|g" ../body.md
-        sed -i "s|@ARM64_STR@|${ARM64_STR}|g" ../body.md
-        sed -i "s|@ARM64_SIZE@|${ARM64_SIZE}|g" ../body.md
-        sed -i "s|@ARM64_SHA@|${ARM64_SHA}|g" ../body.md
-        sed -i "s|@ARMV7_STR@|${ARMV7_STR}|g" ../body.md
-        sed -i "s|@ARMV7_SIZE@|${ARMV7_SIZE}|g" ../body.md
-        sed -i "s|@ARMV7_SHA@|${ARMV7_SHA}|g" ../body.md
-        sed -i "s|@X86_STR@|${X86_STR}|g" ../body.md
-        sed -i "s|@X86_SIZE@|${X86_SIZE}|g" ../body.md
-        sed -i "s|@X86_SHA@|${X86_SHA}|g" ../body.md
-        sed -i "s|@TUI_SIZE@|${TUI_SIZE}|g" ../body.md
-        sed -i "s|@TUI_SHA@|${TUI_SHA}|g" ../body.md
+        sed -i "s|__TAG_NAME__|${TARGET_TAG}|g" ../body.md
+        sed -i "s|__COMMIT_SHA__|${{ github.sha }}|g" ../body.md
+        sed -i "s|__ACTOR__|${{ github.actor }}|g" ../body.md
+        sed -i "s|__TIMESTAMP__|${TIMESTAMP}|g" ../body.md
+        sed -i "s|__SERVER_URL__|${{ github.server_url }}|g" ../body.md
+        sed -i "s|__REPOSITORY__|${{ github.repository }}|g" ../body.md
+        sed -i "s|__RUN_ID__|${{ github.run_id }}|g" ../body.md
+        sed -i "s|__UNIV_STR__|${UNIV_STR}|g" ../body.md
+        sed -i "s|__UNIV_SIZE__|${UNIV_SIZE}|g" ../body.md
+        sed -i "s|__UNIV_SHA__|${UNIV_SHA}|g" ../body.md
+        sed -i "s|__ARM64_STR__|${ARM64_STR}|g" ../body.md
+        sed -i "s|__ARM64_SIZE__|${ARM64_SIZE}|g" ../body.md
+        sed -i "s|__ARM64_SHA__|${ARM64_SHA}|g" ../body.md
+        sed -i "s|__ARMV7_STR__|${ARMV7_STR}|g" ../body.md
+        sed -i "s|__ARMV7_SIZE__|${ARMV7_SIZE}|g" ../body.md
+        sed -i "s|__ARMV7_SHA__|${ARMV7_SHA}|g" ../body.md
+        sed -i "s|__X86_STR__|${X86_STR}|g" ../body.md
+        sed -i "s|__X86_SIZE__|${X86_SIZE}|g" ../body.md
+        sed -i "s|__X86_SHA__|${X86_SHA}|g" ../body.md
+        sed -i "s|__TUI_SIZE__|${TUI_SIZE}|g" ../body.md
+        sed -i "s|__TUI_SHA__|${TUI_SHA}|g" ../body.md
 
         if [ -s "$CHANGELOG_PATH" ]; then
           cat << 'EOF' >> ../body.md
@@ -128,7 +126,7 @@ EOF
 ### 📝 Changelog Summary
 
 For full update details, granular diffs, and precise commit history, please review the automated deployment logs:
-🔗 **[View Complete Commit History](@SERVER_URL@/@REPOSITORY@/commits/@TAG_NAME@)**
+🔗 **[View Complete Commit History](__SERVER_URL__/__REPOSITORY__/commits/__TAG_NAME__)**
 
 ---
 
@@ -139,15 +137,15 @@ For full update details, granular diffs, and precise commit history, please revi
 3.  **Install:** Download the matching variant above and execute the package installer.
 EOF
 
-        sed -i "s|@SERVER_URL@|${{ github.server_url }}|g" ../body.md
-        sed -i "s|@REPOSITORY@|${{ github.repository }}|g" ../body.md
-        sed -i "s|@TAG_NAME@|${TARGET_TAG}|g" ../body.md
+        sed -i "s|__SERVER_URL__|${{ github.server_url }}|g" ../body.md
+        sed -i "s|__REPOSITORY__|${{ github.repository }}|g" ../body.md
+        sed -i "s|__TAG_NAME__|${TARGET_TAG}|g" ../body.md
 
     - name: Push Dynamic Documentation Updates to GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.event.release.tag_name || github.ref_name }}
         body_path: body.md
-        append_body: false # Overwrites initial temporary text block with final calculated layout matrix
+        append_body: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
