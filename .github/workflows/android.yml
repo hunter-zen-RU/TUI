@@ -1,10 +1,9 @@
 name: Build & Publish Release APK
 
 on:
- workflow_dispatch:
-  # push:
-   # tags:
-    #  - 'v*' # Triggers on semantic version tags like v1.0.0
+   push:
+    tags:
+      - 'v*' # Triggers on semantic version tags like v1.0.0
 
 permissions:
   contents: write # Required for creating a release and uploading assets
