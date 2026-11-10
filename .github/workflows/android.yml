@@ -40,7 +40,7 @@ jobs:
         fi
 
     - name: Build Release APK
-      run: ./gradlew assembleRelease
+      run: ./gradlew assembleRelease --no-daemon -Dorg.gradle.workers.max=2
 
     - name: Extract Release Notes
       id: release_notes
