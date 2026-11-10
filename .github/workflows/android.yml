@@ -123,8 +123,8 @@ This production-ready release contains separate APK variants optimized for disti
 > 💡 **Notice on `tui.apk`:** This asset is structurally identical to the Universal layout, tailored explicitly for downstream dynamic validation routines executed via the \`tui -app_update\` module interface.
 EOF
 
-        # Dynamically append New Features & Bug Fixes only if content exists
-        if [ -not -z "$CHANGELOG_CONTENT" ]; then
+        # FIX: Corrected conditional operator (-n evaluates true if string length is not zero)
+        if [ -n "$CHANGELOG_CONTENT" ]; then
           cat << EOF >> ../../../../../body.md
 
 ---
