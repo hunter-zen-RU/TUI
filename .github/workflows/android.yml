@@ -25,6 +25,20 @@ jobs:
     - name: Make Gradle Executable
       run: chmod +x ./gradlew
 
+    - name: Generate debug keystore for Android signing
+      run: |
+        if [ ! -f "$GITHUB_WORKSPACE/debug.keystore" ]; then
+          keytool -genkeypair -v \
+            -keystore "$GITHUB_WORKSPACE/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+        fi
+
     - name: Build Release APK
       run: ./gradlew assembleRelease
 
