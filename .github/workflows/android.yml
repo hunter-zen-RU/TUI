@@ -40,7 +40,8 @@ jobs:
         fi
 
     - name: Build Release APK
-      run: ./gradlew assembleRelease --no-daemon -Dorg.gradle.workers.max=2
+      # Passes the Git tag to Gradle and caps workers to safeguard runner memory
+      run: ./gradlew assembleRelease --no-daemon -Dorg.gradle.workers.max=2 -PGITHUB_REF_NAME="${{ github.ref_name }}"
 
     - name: Extract Release Notes
       id: release_notes
@@ -53,12 +54,12 @@ jobs:
         echo "* **Build Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> body.md
         echo "" >> body.md
         echo "### 🛠️ Developer Notes" >> body.md
-        echo "This production-ready APK was successfully compiled and packaged using an automated CI/CD environment runner." >> body.md
+        echo "This production-ready release contains separate APK variants optimized for distinct CPU architectures alongside a fallback universal variant." >> body.md
         echo "" >> body.md
         echo "### 📝 Changelog Summary" >> body.md
         echo "For full update details and commit history, please review the [commit logs](${{ github.server_url }}/${{ github.repository }}/commits/${{ github.ref_name }})." >> body.md
 
-    - name: Create Release and Upload APK
+    - name: Create Release and Upload APKs
       uses: softprops/action-gh-release@v2
       with:
         name: "Release ${{ github.ref_name }}"
