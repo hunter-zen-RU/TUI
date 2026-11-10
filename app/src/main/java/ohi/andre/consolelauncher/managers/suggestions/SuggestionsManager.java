@@ -585,6 +585,7 @@ public class SuggestionsManager {
 
                 if(showAliasDefault) suggestAlias(pack.aliasManager, suggestionList, lastWord);
                 if(showAppsGpDefault) suggestAppGroup(pack, suggestionList, lastWord, beforeLastSpace );
+                suggestTuiPackages(pack.context, suggestionList, lastWord, beforeLastSpace);
             }
 
 //            lastword == 0 && beforeLastSpace > 0
@@ -681,6 +682,7 @@ public class SuggestionsManager {
                 suggestAlias(pack.aliasManager, suggestionList, lastWord);
                 suggestApp(pack, suggestionList, lastWord, Tuils.EMPTYSTRING);
                 suggestAppGroup(pack, suggestionList, lastWord, beforeLastSpace );
+                suggestTuiPackages(pack.context, suggestionList, lastWord, beforeLastSpace);
             }
         }
 
@@ -708,6 +710,19 @@ public class SuggestionsManager {
                 canInsert--;
 
                 suggestions.add(new Suggestion(Tuils.EMPTYSTRING, a.name, clickToLaunch && !a.isParametrized, Suggestion.TYPE_ALIAS));
+            }
+        }
+    }
+
+    private void suggestTuiPackages(Context context, List<Suggestion> suggestions, String lastWord, String beforeLastSpace) {
+        int canInsert = lastWord == null || lastWord.length() == 0 ? noInputCounts[Suggestion.TYPE_COMMAND] : counts[Suggestion.TYPE_COMMAND];
+        java.util.Map<String, String> installed = ohi.andre.consolelauncher.managers.PackageManager.getInstalledPackagesMap(context);
+
+        for (String pkgName : installed.keySet()) {
+            if (lastWord == null || lastWord.length() == 0 || pkgName.toLowerCase().startsWith(lastWord.toLowerCase())) {
+                if (canInsert == 0) return;
+                canInsert--;
+                suggestions.add(new Suggestion(beforeLastSpace, pkgName, true, Suggestion.TYPE_COMMAND));
             }
         }
     }

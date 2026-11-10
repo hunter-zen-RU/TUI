@@ -487,6 +487,10 @@ public class CommandTuils {
             xmlPrefsFiles.add(AppsManager.PATH);
             xmlPrefsFiles.add(NotificationManager.PATH);
             xmlPrefsFiles.add(RssManager.PATH);
+            xmlPrefsFiles.add("dashboard-item.xml");
+            xmlPrefsFiles.add("dashboard_item.xml");
+            xmlPrefsFiles.add("variable.xml");
+            xmlPrefsFiles.add("variables.xml");
         }
 
         for(String xs : xmlPrefsFiles) {

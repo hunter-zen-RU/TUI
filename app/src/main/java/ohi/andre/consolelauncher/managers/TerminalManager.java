@@ -22,6 +22,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.lang.reflect.Field;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,6 +74,7 @@ public class TerminalManager {
 
     private List<String> cmdList = new ArrayList<>(CMD_LIST_SIZE);
     private int howBack = -1;
+    private static final String HISTORY_FILE = "history.txt";
 
     private Runnable mScrollRunnable = new Runnable() {
         @Override
@@ -116,6 +118,7 @@ public class TerminalManager {
         this.executer = executer;
 
         this.mainPack = mainPack;
+        loadHistory();
 
         this.clickCommands = XMLPrefsManager.getBoolean(Behavior.click_commands);
         this.longClickCommands = XMLPrefsManager.getBoolean(Behavior.long_click_commands);
@@ -272,6 +275,19 @@ public class TerminalManager {
 
             return true;
         });
+
+        this.mInputView.setOnKeyListener((v12, keyCode, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                    onBackPressed();
+                    return true;
+                } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                    onNextPressed();
+                    return true;
+                }
+            }
+            return false;
+        });
 //        if(autoLowerFirstChar) {
 //            this.mInputView.setFilters(new InputFilter[] {new InputFilter() {
 //                @Override
@@ -406,6 +422,7 @@ public class TerminalManager {
             }
             cmdList.add(cmdList.size(), cmd);
             howBack = -1;
+            saveHistory();
         }
 
 //        DO NOT USE THE INTENT APPROACH
@@ -617,6 +634,41 @@ public class TerminalManager {
         mTerminalView.post(() -> mTerminalView.setText(Tuils.EMPTYSTRING));
         cmdList.clear();
         clearCmdsCount = 0;
+        saveHistory();
+    }
+
+    private void saveHistory() {
+        try {
+            File file = new File(Tuils.getFolder(), HISTORY_FILE);
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
+            for (String cmd : cmdList) {
+                fos.write((cmd + "\n").getBytes());
+            }
+            fos.close();
+        } catch (Exception e) {
+            Tuils.log(e);
+        }
+    }
+
+    private void loadHistory() {
+        try {
+            File file = new File(Tuils.getFolder(), HISTORY_FILE);
+            if (!file.exists()) return;
+
+            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(file));
+            String line;
+            cmdList.clear();
+            while ((line = reader.readLine()) != null) {
+                if (cmdList.size() >= CMD_LIST_SIZE) {
+                    cmdList.remove(0);
+                }
+                cmdList.add(line);
+            }
+            reader.close();
+            howBack = -1;
+        } catch (Exception e) {
+            Tuils.log(e);
+        }
     }
 
     public void onRoot() {

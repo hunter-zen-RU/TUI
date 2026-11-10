@@ -306,6 +306,20 @@
             android:theme="@style/Custom.Solid"
             android:exported="false" />
 
+        <activity
+            android:name=".managers.plugins.PluginHostActivity"
+            android:label="T-UI Plugin Host"
+            android:theme="@style/Custom.Solid"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
+        <activity
+            android:name=".managers.plugins.PluginStudioActivity"
+            android:label="T-UI Plugin Studio"
+            android:theme="@style/Custom.Solid"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
         <receiver
             android:name=".tuils.PublicIOReceiver"
             android:permission="ohi.andre.consolelauncher.permission.RECEIVE_CMD"

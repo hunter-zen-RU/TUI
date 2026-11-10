@@ -96,6 +96,12 @@ public class XMLPrefsManager {
             public String[] delete() {
                 return new String[] {};
             }
+        },
+        AI(ohi.andre.consolelauncher.managers.xml.options.Ai.values()) {
+            @Override
+            public String[] delete() {
+                return new String[] {};
+            }
         };
 
 //        notifications
@@ -115,6 +121,7 @@ public class XMLPrefsManager {
 
         @Override
         public void write(XMLPrefsSave save, String value) {
+            values.add(save.label(), value);
             set(new File(Tuils.getFolder(), path), save.label(), new String[] {VALUE_ATTRIBUTE}, new String[] {value});
         }
 
@@ -261,6 +268,14 @@ public class XMLPrefsManager {
             }
 
             writeTo(d, file);
+        }
+
+        try {
+            ohi.andre.consolelauncher.managers.VariablesManager.loadFromFile();
+            ohi.andre.consolelauncher.managers.DashboardItemManager.getInstance().loadFromFile();
+            ohi.andre.consolelauncher.managers.PluginManager.getInstance(context).ensureSamplePlugin();
+        } catch (Exception e) {
+            Tuils.log(e);
         }
     }
 

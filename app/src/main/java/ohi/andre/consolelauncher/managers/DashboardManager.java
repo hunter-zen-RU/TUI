@@ -57,6 +57,7 @@ public class DashboardManager {
     private int cols = 2;
     private int refreshIntervalMs = 1000;
     private String longPressAction = "ai_chat";
+    private String baseTitle = "SYS_KERNEL_MATRIX";
 
     private String fillChar = "█";
     private String emptyChar = "░";
@@ -81,9 +82,11 @@ public class DashboardManager {
     private int originalRows = 2;
     private int originalCols = 2;
 
+    public static DashboardManager instance;
+
     private static class BoxHolder {
         int index;
-        int widgetType;
+        DashboardItem item;
         TextView titleTv;
         TextView detailTv;
         TextView barTv;
@@ -94,6 +97,7 @@ public class DashboardManager {
 
     public DashboardManager(Context context, View rootView) {
         this.context = context;
+        instance = this;
         if (rootView == null) return;
 
         rootContainer = rootView.findViewById(R.id.dashboard_root_container);
@@ -136,8 +140,11 @@ public class DashboardManager {
             enableBlur = XMLPrefsManager.getBoolean(Dashboard.enable_blur_effect);
 
             String title = XMLPrefsManager.get(Dashboard.dashboard_title);
-            if (titleTv != null && title != null && !title.isEmpty()) {
-                titleTv.setText(" " + title);
+            if (title != null && !title.isEmpty()) {
+                baseTitle = title;
+            }
+            if (titleTv != null) {
+                titleTv.setText(" " + VariablesManager.resolveVariables(context, baseTitle, null));
             }
 
             String gridLayoutStr = XMLPrefsManager.get(Dashboard.grid_layout);
@@ -209,12 +216,22 @@ public class DashboardManager {
         }
     }
 
+    public void reloadGrid() {
+        DashboardItemManager.getInstance().loadFromFile();
+        loadConfig();
+        setupGrid();
+        updateDashboardData();
+    }
+
     private void setupGrid() {
         if (gridContainer == null) return;
         gridContainer.removeAllViews();
         boxHolders.clear();
         gridContainer.setColumnCount(cols);
         gridContainer.setRowCount(rows);
+
+        DashboardItemManager itemManager = DashboardItemManager.getInstance();
+        itemManager.loadFromFile();
 
         int totalBoxes = rows * cols;
         Typeface monoTypeface = Tuils.getTypeface(context);
@@ -223,22 +240,17 @@ public class DashboardManager {
         int cellWidth = (screenWidth / cols) - Tuils.dpToPx(context, 8);
 
         for (int i = 0; i < totalBoxes; i++) {
-            int widgetType = i % 10;
+            int boxIndex = i + 1;
+            DashboardItem item = itemManager.getItem(boxIndex);
+
             int accent = cpuColor;
-            String boxTitle = "[ CPU LOAD ]";
-            
-            switch (widgetType) {
-                case 0: accent = cpuColor; boxTitle = "[ CPU CORE LOAD ]"; break;
-                case 1: accent = ramColor; boxTitle = "[ RAM MEM ALLOC ]"; break;
-                case 2: accent = batteryColor; boxTitle = "[ BATTERY CELL ]"; break;
-                case 3: accent = storageColor; boxTitle = "[ DISK STORAGE ]"; break;
-                case 4: accent = netColor; boxTitle = "[ NETWORK NET ]"; break;
-                case 5: accent = uptimeColor; boxTitle = "[ SYS UPTIME ]"; break;
-                case 6: accent = Color.parseColor("#00FFFF"); boxTitle = "[ DEVICE MODEL ]"; break;
-                case 7: accent = Color.parseColor("#FF5555"); boxTitle = "[ THERMAL SENS ]"; break;
-                case 8: accent = Color.parseColor("#FFD700"); boxTitle = "[ DISPLAY MATRIX ]"; break;
-                case 9: accent = Color.parseColor("#00FF66"); boxTitle = "[ SHELL KERNEL ]"; break;
+            try {
+                accent = Color.parseColor(item.getColor());
+            } catch (Exception e) {
+                accent = cpuColor;
             }
+            String boxTitle = item.getTitle();
+
             LinearLayout boxLayout = new LinearLayout(context);
             boxLayout.setOrientation(LinearLayout.VERTICAL);
             boxLayout.setPadding(Tuils.dpToPx(context, 6), Tuils.dpToPx(context, 5), Tuils.dpToPx(context, 6), Tuils.dpToPx(context, 5));
@@ -252,6 +264,7 @@ public class DashboardManager {
             params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             params.setMargins(Tuils.dpToPx(context, 4), Tuils.dpToPx(context, 4), Tuils.dpToPx(context, 4), Tuils.dpToPx(context, 4));
             boxLayout.setLayoutParams(params);
+
             LinearLayout titleRow = new LinearLayout(context);
             titleRow.setOrientation(LinearLayout.HORIZONTAL);
             TextView boxTitleTv = new TextView(context);
@@ -268,17 +281,28 @@ public class DashboardManager {
             boxDetailTv.setTypeface(monoTypeface);
             titleRow.addView(boxTitleTv);
             titleRow.addView(boxDetailTv);
+
             TextView barTv = new TextView(context);
             barTv.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             barTv.setText("[░░░░░░░░░░]");
             barTv.setTextColor(accent);
             barTv.setTextSize(10f);
             barTv.setTypeface(monoTypeface);
+            if (!item.isShowBar()) {
+                barTv.setVisibility(View.GONE);
+            }
+
             boxLayout.addView(titleRow);
             boxLayout.addView(barTv);
             gridContainer.addView(boxLayout);
+
             BoxHolder holder = new BoxHolder();
-            holder.index = i; holder.widgetType = widgetType; holder.titleTv = boxTitleTv; holder.detailTv = boxDetailTv; holder.barTv = barTv; holder.accentColor = accent;
+            holder.index = boxIndex;
+            holder.item = item;
+            holder.titleTv = boxTitleTv;
+            holder.detailTv = boxDetailTv;
+            holder.barTv = barTv;
+            holder.accentColor = accent;
             boxHolders.add(holder);
         }
     }
@@ -304,7 +328,6 @@ public class DashboardManager {
         if ("none".equalsIgnoreCase(longPressAction)) return;
 
         if ("ai_chat".equalsIgnoreCase(longPressAction)) {
-            // Activity will be created next
             Intent intent = new Intent();
             intent.setComponent(new android.content.ComponentName(context, "ohi.andre.consolelauncher.managers.AiChatActivity"));
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -344,6 +367,7 @@ public class DashboardManager {
     private void updateDashboardData() {
         try {
             if (timeTv != null) timeTv.setText(new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date()));
+            if (titleTv != null) titleTv.setText(" " + VariablesManager.resolveVariables(context, baseTitle, null));
             if (dotTv != null) {
                 dotState = !dotState;
                 dotTv.setText(dotState ? "● LIVE" : "○ LIVE");
@@ -351,15 +375,18 @@ public class DashboardManager {
 
             int barChars = Math.max(6, 16 - (cols * 2));
             for (BoxHolder holder : boxHolders) {
+                if (holder.item == null) continue;
+                String type = holder.item.getType().toLowerCase();
                 String detail = "--";
                 int percentage = 0;
 
-                switch (holder.widgetType) {
-                    case 0: // CPU
+                switch (type) {
+                    case "cpu": {
                         percentage = Tuils.getCpuUsage();
                         detail = percentage + "%";
                         break;
-                    case 1: // RAM
+                    }
+                    case "ram": {
                         activityManager.getMemoryInfo(memoryInfo);
                         long totalRam = Tuils.totalRam() * 1024;
                         long availRam = memoryInfo.availMem;
@@ -367,7 +394,8 @@ public class DashboardManager {
                         percentage = totalRam > 0 ? (int) (usedRam * 100 / totalRam) : 0;
                         detail = Tuils.round(usedRam / 1024.0 / 1024.0 / 1024.0, 1) + "G";
                         break;
-                    case 2: // Battery
+                    }
+                    case "battery": {
                         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
                         Intent batteryStatus = context.registerReceiver(null, ifilter);
                         int level = batteryStatus != null ? batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) : 0;
@@ -375,14 +403,16 @@ public class DashboardManager {
                         percentage = (int) (level * 100 / (float) scale);
                         detail = percentage + "%";
                         break;
-                    case 3: // Storage
+                    }
+                    case "storage": {
                         double totalSpace = Tuils.getTotalInternalMemorySize(Tuils.GIGA);
                         double availSpace = Tuils.getAvailableInternalMemorySize(Tuils.GIGA);
                         double usedSpace = totalSpace - availSpace;
                         percentage = totalSpace > 0 ? (int) (usedSpace * 100 / totalSpace) : 0;
                         detail = (int) usedSpace + "G/" + (int) totalSpace + "G";
                         break;
-                    case 4: // Network
+                    }
+                    case "network": {
                         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
                         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
                         if (activeNetwork != null && activeNetwork.isConnected()) {
@@ -393,32 +423,95 @@ public class DashboardManager {
                             percentage = 0;
                         }
                         break;
-                    case 5: // Uptime
+                    }
+                    case "uptime": {
                         long uptime = SystemClock.elapsedRealtime() / 1000;
                         detail = (uptime / 3600) + "h";
                         percentage = (int) ((uptime % 86400) * 100 / 86400);
                         break;
-                    case 6: // Model
+                    }
+                    case "device": {
                         detail = Build.MODEL;
                         percentage = 100;
                         break;
-                    case 7: // Thermal
+                    }
+                    case "thermal": {
                         detail = "38\u00B0C";
                         percentage = 40;
                         break;
-                    case 8: // Display
+                    }
+                    case "display": {
                         DisplayMetrics dm = context.getResources().getDisplayMetrics();
                         detail = dm.widthPixels + "x" + dm.heightPixels;
                         percentage = 100;
                         break;
-                    case 9: // Kernel
+                    }
+                    case "kernel": {
                         detail = System.getProperty("os.version");
                         percentage = 100;
                         break;
+                    }
+                    case "time": {
+                        detail = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+                        percentage = 100;
+                        break;
+                    }
+                    case "date": {
+                        detail = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                        percentage = 100;
+                        break;
+                    }
+                    case "network_download": {
+                        detail = VariablesManager.resolveVariables(context, "{{network_download}}", null);
+                        percentage = 60;
+                        break;
+                    }
+                    case "network_upload": {
+                        detail = VariablesManager.resolveVariables(context, "{{network_upload}}", null);
+                        percentage = 40;
+                        break;
+                    }
+                    case "variable": {
+                        String varKey = holder.item.getVariableName();
+                        if (varKey.isEmpty()) varKey = "user";
+                        detail = VariablesManager.resolveVariables(context, "{{" + varKey + "}}", null);
+                        percentage = 100;
+                        try {
+                            percentage = Math.max(0, Math.min(100, Integer.parseInt(detail.replaceAll("\\D+", ""))));
+                        } catch (Exception ignored) {}
+                        break;
+                    }
+                    case "custom": {
+                        String customT = holder.item.getCustomText();
+                        if (customT.isEmpty()) customT = holder.item.getFormat();
+                        detail = VariablesManager.resolveVariables(context, customT, null);
+                        percentage = 100;
+                        break;
+                    }
+                    default: {
+                        detail = VariablesManager.resolveVariables(context, "{{" + type + "}}", null);
+                        if (detail.equals("{{" + type + "}}")) {
+                            detail = type.toUpperCase();
+                        }
+                        percentage = 100;
+                        break;
+                    }
+                }
+
+                if (holder.item.getFormat() != null && !holder.item.getFormat().isEmpty()) {
+                    String customFmt = holder.item.getFormat();
+                    if (customFmt.contains("%v")) {
+                        detail = customFmt.replace("%v", detail);
+                    }
                 }
 
                 holder.detailTv.setText(detail);
-                holder.barTv.setText(getBarString(percentage, barChars));
+                if (holder.item.isShowBar()) {
+                    holder.barTv.setVisibility(View.VISIBLE);
+                    holder.barTv.setText(getBarString(percentage, barChars));
+                } else {
+                    holder.barTv.setVisibility(View.GONE);
+                }
             }
         } catch (Exception e) {
             Tuils.log(e);

@@ -286,6 +286,14 @@ public class MainManager {
 //    command manager
     public void onCommand(String input, String alias, boolean wasMusicService) {
         input = Tuils.removeUnncesarySpaces(input);
+        
+        // Resolve variables for all input
+        input = ohi.andre.consolelauncher.managers.VariablesManager.resolveVariables(mContext, input, null);
+
+        // Redirect 'set var=val' to 'variables -set var=val'
+        if (input.toLowerCase().startsWith("set ") && !input.contains(" -")) {
+            input = "variables -set " + input.substring(4).trim();
+        }
 
         if(alias == null) updateServices(input, wasMusicService);
 

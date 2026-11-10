@@ -11,6 +11,8 @@ These variables are automatically resolved by the T-UI engine at runtime. You ca
 | `{{ram_avail}}` | Currently available RAM (GB) | `2.4G` |
 | `{{ram_used}}` | Currently used RAM (GB) | `5.6G` |
 | `{{battery}}` | Current battery level (%) | `85` |
+| `{{battery_level}}` | Battery charge level percentage | `85` |
+| `{{battery_status}}` | Battery charging status (Charging/Discharging) | `Charging` |
 | `{{storage_total}}` | Total internal storage (GB) | `128G` |
 | `{{storage_avail}}` | Available internal storage (GB) | `42G` |
 | `{{uptime}}` | System uptime in seconds | `3600` |

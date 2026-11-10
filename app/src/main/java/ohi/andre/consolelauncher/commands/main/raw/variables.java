@@ -1,8 +1,6 @@
 package ohi.andre.consolelauncher.commands.main.raw;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import ohi.andre.consolelauncher.R;
@@ -60,10 +58,47 @@ public class variables extends ParamCommand {
                 String name = pack.getString().trim();
                 String val = VariablesManager.getVariable(name);
                 if (val == null || val.isEmpty()) {
-                    return "Variable '" + name + "' not found.";
+                    if (VariablesManager.isPredefined(name)) {
+                        val = "{{" + name + "}}";
+                    } else {
+                        return "Variable '" + name + "' not found.";
+                    }
                 }
                 String detectedType = VariablesManager.detectType(val);
-                return name + " = " + val + " [" + detectedType + "]";
+                String desc = VariablesManager.getDescription(name);
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(name).append(" = ").append(val).append(" [").append(detectedType).append("]");
+                if (desc != null && !desc.isEmpty()) {
+                    sb.append("\nDescription: ").append(desc);
+                }
+                if (VariablesManager.isPredefined(name)) {
+                    String live = VariablesManager.getLiveValue(pack.context, name);
+                    sb.append("\nLive Value: ").append(live);
+                }
+                return sb.toString();
+            }
+        },
+        desc {
+            @Override
+            public int[] args() {
+                return new int[] {CommandAbstraction.PLAIN_TEXT};
+            }
+
+            @Override
+            public String exec(ExecutePack pack) {
+                String str = pack.getString().trim();
+                String[] parts = str.split("\\s+", 2);
+                if (parts.length < 2) {
+                    return "Usage: variables -desc [variable_name] [description text]";
+                }
+                String name = parts[0].trim();
+                String desc = parts[1].trim();
+                if (desc.startsWith("\"") && desc.endsWith("\"") && desc.length() >= 2) {
+                    desc = desc.substring(1, desc.length() - 1);
+                }
+                VariablesManager.setDescription(name, desc);
+                return "Description updated for " + name + ": " + desc;
             }
         },
         ls {
@@ -75,13 +110,25 @@ public class variables extends ParamCommand {
             @Override
             public String exec(ExecutePack pack) {
                 Map<String, String> all = VariablesManager.getAllVariables();
+                Map<String, String> descs = VariablesManager.getAllDescriptions();
+
                 if (all.isEmpty()) {
-                    return "No variables defined in variables.xml.";
+                    return "No variables defined in variable.xml.";
                 }
-                StringBuilder sb = new StringBuilder("[variables.xml]:\n");
+
+                StringBuilder sb = new StringBuilder("[variable.xml / variables.xml]:\n");
                 for (Map.Entry<String, String> entry : all.entrySet()) {
-                    String type = VariablesManager.detectType(entry.getValue());
-                    sb.append("  {{").append(entry.getKey()).append("}} = ").append(entry.getValue()).append(" [").append(type).append("]\n");
+                    String name = entry.getKey();
+                    String val = entry.getValue();
+                    String type = VariablesManager.detectType(val);
+                    String desc = descs.getOrDefault(name, "");
+
+                    sb.append("  {{").append(name).append("}} = ").append(val);
+                    sb.append(" [").append(type).append("]");
+                    if (!desc.isEmpty()) {
+                        sb.append(" - ").append(desc);
+                    }
+                    sb.append("\n");
                 }
                 return sb.toString().trim();
             }
@@ -94,9 +141,10 @@ public class variables extends ParamCommand {
 
             @Override
             public String exec(ExecutePack pack) {
-                File xmlFile = new File(Tuils.getFolder(), VariablesManager.FILE_NAME);
+                VariablesManager.loadFromFile();
+                File xmlFile = new File(Tuils.getFolder(), VariablesManager.ALT_FILE_NAME);
                 if (!xmlFile.exists()) {
-                    VariablesManager.setVariable("init", "1");
+                    xmlFile = new File(Tuils.getFolder(), VariablesManager.FILE_NAME);
                 }
                 pack.context.startActivity(Tuils.openFile(pack.context, xmlFile));
                 return null;

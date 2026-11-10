@@ -9,6 +9,8 @@ import ohi.andre.consolelauncher.commands.main.MainPack;
 import ohi.andre.consolelauncher.commands.main.specific.ParamCommand;
 import ohi.andre.consolelauncher.managers.AiManager;
 import ohi.andre.consolelauncher.managers.VariablesManager;
+import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
+import ohi.andre.consolelauncher.managers.xml.options.Ai;
 import ohi.andre.consolelauncher.tuils.Tuils;
 
 public class ai extends ParamCommand {
@@ -22,8 +24,8 @@ public class ai extends ParamCommand {
             public String exec(ExecutePack pack) {
                 String key = pack.getString().trim();
                 if (key.isEmpty()) return pack.context.getString(R.string.output_lessarg);
-                AiManager.setApiKey(key);
-                return "AI API Key updated.";
+                XMLPrefsManager.XMLPrefsRoot.AI.write(Ai.google_api_key, key);
+                return "Google AI API Key updated in ai.xml.";
             }
         },
         test {
@@ -32,7 +34,7 @@ public class ai extends ParamCommand {
 
             @Override
             public String exec(ExecutePack pack) {
-                Tuils.sendOutput(pack.context, "Testing AI connection...");
+                Tuils.sendOutput(pack.context, "Testing AI connection (" + XMLPrefsManager.get(Ai.ai_mode) + ")...");
                 AiManager aiManager = new AiManager(pack.context);
                 aiManager.testApi(new AiManager.AiCallback() {
                     @Override
@@ -84,8 +86,22 @@ public class ai extends ParamCommand {
             public String exec(ExecutePack pack) {
                 String prompt = pack.getString().trim();
                 if (prompt.isEmpty()) return pack.context.getString(R.string.output_lessarg);
-                AiManager.setSystemPrompt(prompt);
-                return "AI System Prompt updated.";
+                XMLPrefsManager.XMLPrefsRoot.AI.write(Ai.system_prompt, prompt);
+                return "AI System Prompt updated in ai.xml.";
+            }
+        },
+        mode {
+            @Override
+            public int[] args() { return new int[]{CommandAbstraction.PLAIN_TEXT}; }
+
+            @Override
+            public String exec(ExecutePack pack) {
+                String mode = pack.getString().trim().toLowerCase();
+                if (!mode.equals("global") && !mode.equals("local")) {
+                    return "Invalid mode. Use 'global' or 'local'.";
+                }
+                XMLPrefsManager.XMLPrefsRoot.AI.write(Ai.ai_mode, mode);
+                return "AI Mode set to: " + mode;
             }
         };
 
@@ -122,7 +138,7 @@ public class ai extends ParamCommand {
         String prompt = pack.getString().trim();
         if (prompt.isEmpty()) return pack.context.getString(R.string.help_ai);
 
-        Tuils.sendOutput(pack.context, "AI thinking...");
+        Tuils.sendOutput(pack.context, "AI thinking (" + XMLPrefsManager.get(Ai.ai_mode) + ")...");
         AiManager aiManager = new AiManager(pack.context);
         aiManager.generateResponse(prompt, new AiManager.AiCallback() {
             @Override

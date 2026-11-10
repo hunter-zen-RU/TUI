@@ -5,7 +5,8 @@ import ohi.andre.consolelauncher.commands.CommandAbstraction;
 import ohi.andre.consolelauncher.commands.ExecutePack;
 import ohi.andre.consolelauncher.commands.main.MainPack;
 import ohi.andre.consolelauncher.commands.main.specific.ParamCommand;
-import ohi.andre.consolelauncher.managers.AiManager;
+import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
+import ohi.andre.consolelauncher.managers.xml.options.Ai;
 import ohi.andre.consolelauncher.tuils.Tuils;
 
 public class api extends ParamCommand {
@@ -19,8 +20,8 @@ public class api extends ParamCommand {
             public String exec(ExecutePack pack) {
                 String key = pack.getString().trim();
                 if (key.isEmpty()) return pack.context.getString(R.string.output_lessarg);
-                AiManager.setApiKey(key);
-                return "API Key updated.";
+                XMLPrefsManager.XMLPrefsRoot.AI.write(Ai.google_api_key, key);
+                return "Google AI API Key updated in ai.xml.";
             }
         };
 
