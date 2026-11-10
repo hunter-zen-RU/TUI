@@ -3,13 +3,14 @@ name: Build & Publish Rolling Debug APK
 on:
   push:
     branches:
-      - main # Or your default branch (e.g., master)
+      - main
+      - master
     paths-ignore:
       - '*.md'
       - '*.txt'
       - '.github/**'
-      - 'docs/**' # Example: ignoring an entire folder
-      - 'specific-file.json' # Example: ignoring a explicit filename
+      - 'docs/**'
+  workflow_dispatch:
 
 permissions:
   contents: write # Required to update the 'debug' release tag and assets
@@ -55,18 +56,20 @@ jobs:
         
         # Generate timestamp in YYYYMMDD-HHMM format
         TIMESTAMP=$(date -u '+%Y%m%d-%H%M')
+        HUMAN_TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
         NEW_NAME="Debug-${TIMESTAMP}.apk"
         
         # Locate the default generated debug APK
-        DEFAULT_APK=$(ls *.apk | head -n 1)
+        DEFAULT_APK=$(ls *.apk 2>/dev/null | head -n 1)
         
         if [ -f "$DEFAULT_APK" ]; then
           mv "$DEFAULT_APK" "$NEW_NAME"
           echo "Renamed $DEFAULT_APK to $NEW_NAME"
           
-          # Pass the dynamic filename downstream to the upload step
+          # Pass dynamic outputs downstream
           echo "apk_name=$NEW_NAME" >> $GITHUB_OUTPUT
           echo "apk_path=app/build/outputs/apk/debug/$NEW_NAME" >> $GITHUB_OUTPUT
+          echo "timestamp=$HUMAN_TIMESTAMP" >> $GITHUB_OUTPUT
         else
           echo "Error: Debug APK not found!" && exit 1
         fi
@@ -81,7 +84,7 @@ jobs:
           This release contains the latest debug compilation snapshot.
           
           * **File Name:** `${{ steps.rename_apk.outputs.apk_name }}`
-          * **Last Updated:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          * **Last Updated:** `${{ steps.rename_apk.outputs.timestamp }}`
           * **Triggered by Commit:** `${{ github.sha }}`
         files: ${{ steps.rename_apk.outputs.apk_path }}
         make_latest: false

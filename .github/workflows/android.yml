@@ -1,15 +1,16 @@
 name: Build & Publish Release APK
 
 on:
-   push:
+  push:
     tags:
       - 'v*' # Triggers on semantic version tags like v1.0.0
+  workflow_dispatch:
 
 permissions:
   contents: write # Required for creating a release and uploading assets
 
 jobs:
-  Gradle:
+  Build-Release:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Code
@@ -46,7 +47,7 @@ jobs:
       run: |
         cd app/build/outputs/apk/release/
         # Finds the generated universal APK file and copies it to tui.apk
-        UNIVERSAL_FILE=$(ls *universal*.apk | head -n 1)
+        UNIVERSAL_FILE=$(ls *universal*.apk 2>/dev/null | head -n 1)
         if [ -f "$UNIVERSAL_FILE" ]; then
           cp "$UNIVERSAL_FILE" tui.apk
           echo "Successfully copied $UNIVERSAL_FILE to tui.apk"
@@ -57,24 +58,14 @@ jobs:
     - name: Extract Release Notes and Generate Checksums
       id: release_notes
       run: |
-        # Store absolute path to the changelog file before changing directories
         CHANGELOG_PATH="$GITHUB_WORKSPACE/fix-bug.md"
-        CHANGELOG_CONTENT=""
-
-        # Check if the optional fix-bug.md exists in the root directory
-        if [ -f "$CHANGELOG_PATH" ]; then
-          echo "Found fix-bug.md! Reading changelog contents..."
-          CHANGELOG_CONTENT=$(cat "$CHANGELOG_PATH")
-        else
-          echo "fix-bug.md not found in root directory. Skipping inline changelog generation."
-        fi
 
         cd app/build/outputs/apk/release/
         
-        # Core dynamic calculations for your artifact table
+        # Core dynamic calculations for artifact table
         calc_size() {
           local file=$1
-          if [ -f "$file" ]; then
+          if [ -n "$file" ] && [ -f "$file" ]; then
             ls -lh "$file" | awk '{print $5}'
           else
             echo "N/A"
@@ -83,18 +74,35 @@ jobs:
         
         calc_sha() {
           local file=$1
-          if [ -f "$file" ]; then
+          if [ -n "$file" ] && [ -f "$file" ]; then
             sha256sum "$file" | awk '{print $1}'
           else
             echo "N/A"
           fi
         }
 
-        # Find architecture filenames dynamically to avoid rigid naming schemes
+        # Find architecture filenames dynamically
         UNIVERSAL_NAME=$(ls *universal*.apk 2>/dev/null | head -n 1)
         ARM64_NAME=$(ls *arm64-v8a*.apk 2>/dev/null | head -n 1)
         ARMV7_NAME=$(ls *armeabi-v7a*.apk 2>/dev/null | head -n 1)
         X86_NAME=$(ls *x86_64*.apk 2>/dev/null | head -n 1)
+
+        UNIV_STR="${UNIVERSAL_NAME:-universal-release.apk}"
+        ARM64_STR="${ARM64_NAME:-arm64-v8a-release.apk}"
+        ARMV7_STR="${ARMV7_NAME:-armeabi-v7a-release.apk}"
+        X86_STR="${X86_NAME:-x86_64-release.apk}"
+
+        UNIVERSAL_SIZE=$(calc_size "$UNIVERSAL_NAME")
+        UNIVERSAL_SHA=$(calc_sha "$UNIVERSAL_NAME")
+        ARM64_SIZE=$(calc_size "$ARM64_NAME")
+        ARM64_SHA=$(calc_sha "$ARM64_NAME")
+        ARMV7_SIZE=$(calc_size "$ARMV7_NAME")
+        ARMV7_SHA=$(calc_sha "$ARMV7_NAME")
+        X86_SIZE=$(calc_size "$X86_NAME")
+        X86_SHA=$(calc_sha "$X86_NAME")
+        TUI_SIZE=$(calc_size "tui.apk")
+        TUI_SHA=$(calc_sha "tui.apk")
+        BUILD_TIME=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
 
         # Assemble markdown output
         cat << EOF > ../../../../../body.md
@@ -103,7 +111,7 @@ jobs:
 *   **Release Tag:** \`${{ github.ref_name }}\`
 *   **Commit Reference:** \`${{ github.sha }}\`
 *   **Triggered By:** @\`${{ github.actor }}\`
-*   **Build Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+*   **Build Timestamp:** ${BUILD_TIME}
 *   **Pipeline Source:** [Job Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
 ---
@@ -114,24 +122,24 @@ This production-ready release contains separate APK variants optimized for disti
 
 | Variant Asset Name | Target Architecture | Build Size | SHA-256 Checksum Verification |
 | :--- | :--- | :--- | :--- |
-| \`${UNIVERSAL_NAME:-universal-release.apk}\` | All ABIs (Universal) | \`$(calc_size "$UNIVERSAL_NAME")\` | \`${calc_sha "$UNIVERSAL_NAME"}\` |
-| \`${ARM64_NAME:-arm64-v8a-release.apk}\` | Modern 64-bit ARM | \`$(calc_size "$ARM64_NAME")\` | \`${calc_sha "$ARM64_NAME"}\` |
-| \`${ARMV7_NAME:-armeabi-v7a-release.apk}\` | Legacy 32-bit ARM | \`$(calc_size "$ARMV7_NAME")\` | \`${calc_sha "$ARMV7_NAME"}\` |
-| \`${X86_NAME:-x86_64-release.apk}\` | 64-bit Intel/AMD Emulators | \`$(calc_size "$X86_NAME")\` | \`${calc_sha "$X86_NAME"}\` |
-| \`tui.apk\` | In-App System Overrides | \`$(calc_size "tui.apk")\` | \`${calc_sha "tui.apk"}\` |
+| \`${UNIV_STR}\` | All ABIs (Universal) | \`${UNIVERSAL_SIZE}\` | \`${UNIVERSAL_SHA}\` |
+| \`${ARM64_STR}\` | Modern 64-bit ARM | \`${ARM64_SIZE}\` | \`${ARM64_SHA}\` |
+| \`${ARMV7_STR}\` | Legacy 32-bit ARM | \`${ARMV7_SIZE}\` | \`${ARMV7_SHA}\` |
+| \`${X86_STR}\` | 64-bit Intel/AMD Emulators | \`${X86_SIZE}\` | \`${X86_SHA}\` |
+| \`tui.apk\` | In-App System Overrides | \`${TUI_SIZE}\` | \`${TUI_SHA}\` |
 
-> 💡 **Notice on `tui.apk`:** This asset is structurally identical to the Universal layout, tailored explicitly for downstream dynamic validation routines executed via the \`tui -app_update\` module interface.
+> 💡 **Notice on \`tui.apk\`:** This asset is structurally identical to the Universal layout, tailored explicitly for downstream dynamic validation routines executed via the \`tui -app_update\` module interface.
 EOF
 
-        # Dynamically append New Features & Bug Fixes only if content exists
-        if [ -n "$CHANGELOG_CONTENT" ]; then
-          cat << EOF >> ../../../../../body.md
+        # Dynamically append New Features & Bug Fixes only if fix-bug.md exists and is non-empty
+        if [ -f "$CHANGELOG_PATH" ] && [ -s "$CHANGELOG_PATH" ]; then
+          cat << 'EOF' >> ../../../../../body.md
 
 ---
 
 ### ✨ New Features & Bug Fixes
-$CHANGELOG_CONTENT
 EOF
+          cat "$CHANGELOG_PATH" >> ../../../../../body.md
         fi
 
         # Complete the trailing documentation elements
