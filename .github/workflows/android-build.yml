@@ -59,15 +59,6 @@ jobs:
       run: |
         # Store absolute path to the changelog file before changing directories
         CHANGELOG_PATH="$GITHUB_WORKSPACE/fix-bug.md"
-        CHANGELOG_CONTENT=""
-
-        # Check if the optional fix-bug.md exists in the root directory
-        if [ -f "$CHANGELOG_PATH" ]; then
-          echo "Found fix-bug.md! Reading changelog contents..."
-          CHANGELOG_CONTENT=$(cat "$CHANGELOG_PATH")
-        else
-          echo "fix-bug.md not found in root directory. Skipping inline changelog generation."
-        fi
 
         cd app/build/outputs/apk/release/
         
@@ -123,15 +114,15 @@ This production-ready release contains separate APK variants optimized for disti
 > 💡 **Notice on `tui.apk`:** This asset is structurally identical to the Universal layout, tailored explicitly for downstream dynamic validation routines executed via the \`tui -app_update\` module interface.
 EOF
 
-        # FIX: Corrected conditional operator (-n evaluates true if string length is not zero)
-        if [ -n "$CHANGELOG_CONTENT" ]; then
-          cat << EOF >> ../../../../../body.md
+        # Dynamically append New Features & Bug Fixes only if file exists and has content
+        if [ -s "$CHANGELOG_PATH" ]; then
+          cat << 'EOF' >> ../../../../../body.md
 
 ---
 
 ### ✨ New Features & Bug Fixes
-$CHANGELOG_CONTENT
 EOF
+          cat "$CHANGELOG_PATH" >> ../../../../../body.md
         fi
 
         # Complete the trailing documentation elements
