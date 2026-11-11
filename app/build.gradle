@@ -6,11 +6,11 @@ android {
     compileSdk 34
 
     signingConfigs {
-        create("debugConfig") {
-            storeFile = file("${rootDir}/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+        debug {
+            storeFile file("${rootDir}/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
             v1SigningEnabled true
             v2SigningEnabled true
         }
@@ -38,13 +38,14 @@ android {
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.getByName("debugConfig")
+            debuggable true
+            signingConfig signingConfigs.debug
         }
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.getByName("debugConfig")
+            signingConfig signingConfigs.debug
         }
     }
 
@@ -64,26 +65,6 @@ android {
     splits {
         abi {
             enable false
-        }
-    }
-
-    // Automatically names APKs as: name-cpu_build-tag.apk
-    applicationVariants.all { variant ->
-        variant.outputs.all { output ->
-            // 1. Base name for your application file
-            def appName = "consolelauncher"
-            
-            // 2. Detect the CPU target build type
-            def abiFilter = output.getFilter(com.android.build.OutputFile.ABI)
-            if (abiFilter == null) {
-                abiFilter = "universal"
-            }
-            
-            // 3. Fallback to versionName if GITHUB_REF_NAME property isn't explicitly passed
-            def tagVersion = project.hasProperty('GITHUB_REF_NAME') ? project.property('GITHUB_REF_NAME') : variant.versionName
-
-            // 4. Force structural name mapping format
-            outputFileName = "${appName}-${abiFilter}-${tagVersion}.apk"
         }
     }
 }

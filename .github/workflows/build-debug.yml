@@ -32,9 +32,11 @@ jobs:
     - name: Make Gradle Executable
       run: chmod +x ./gradlew
 
-    - name: Generate debug keystore for Android signing
+    - name: Restore debug keystore for consistent Android signing
       run: |
-        if [ ! -f "$GITHUB_WORKSPACE/debug.keystore" ]; then
+        if [ -f "$GITHUB_WORKSPACE/debug.keystore.base64" ]; then
+          base64 -d "$GITHUB_WORKSPACE/debug.keystore.base64" > "$GITHUB_WORKSPACE/debug.keystore"
+        elif [ ! -f "$GITHUB_WORKSPACE/debug.keystore" ]; then
           keytool -genkeypair -v \
             -keystore "$GITHUB_WORKSPACE/debug.keystore" \
             -storepass android \
