@@ -42,103 +42,104 @@ jobs:
     - name: Build Release APK
       run: ./gradlew assembleRelease --no-daemon -Dorg.gradle.workers.max=2 -PGITHUB_REF_NAME="${{ github.ref_name }}"
 
-    - name: Create tui.apk copy from Universal APK
+    - name: Create named APK copies
+      env:
+        VERSION: ${{ github.ref_name }}
       run: |
+        set -euo pipefail
         cd app/build/outputs/apk/release/
-        # Finds the generated universal APK file and copies it to tui.apk
-        UNIVERSAL_FILE=$(ls *universal*.apk 2>/dev/null | head -n 1)
-        if [ -n "$UNIVERSAL_FILE" ] && [ -f "$UNIVERSAL_FILE" ]; then
-          cp "$UNIVERSAL_FILE" tui.apk
-          echo "Successfully copied $UNIVERSAL_FILE to tui.apk"
-        else
-          echo "Error: Universal APK not found!" && exit 1
+
+        shopt -s nullglob
+        APK_FILES=( *.apk )
+        if [ "${#APK_FILES[@]}" -ne 1 ]; then
+          echo "Expected exactly one APK from assembleRelease, found ${#APK_FILES[@]}: ${APK_FILES[*]:-none}" >&2
+          exit 1
         fi
+
+        SOURCE_APK="${APK_FILES[0]}"
+        cp "$SOURCE_APK" tui.apk
+        cp "$SOURCE_APK" "universal-${VERSION}-release.apk"
+
+        # ABI splits are disabled in app/build.gradle, so these are named copies
+        # of the same universal APK, not separately optimized architecture builds.
+        for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+          cp "$SOURCE_APK" "${abi}-${VERSION}-release.apk"
+        done
+
+        echo "Created tui.apk, universal-${VERSION}-release.apk, and per-ABI named copies from ${SOURCE_APK}."
 
     - name: Extract Release Notes and Generate Checksums
       id: release_notes
+      env:
+        VERSION: ${{ github.ref_name }}
       run: |
+        set -euo pipefail
         cd app/build/outputs/apk/release/
 
         calc_size() {
           local file=$1
-          if [ -n "$file" ] && [ -f "$file" ]; then
-            ls -lh "$file" | awk '{print $5}'
-          else
-            echo "N/A"
-          fi
+          ls -lh "$file" | awk '{print $5}'
         }
 
         calc_sha() {
           local file=$1
-          if [ -n "$file" ] && [ -f "$file" ]; then
-            sha256sum "$file" | awk '{print $1}'
-          else
-            echo "N/A"
-          fi
+          sha256sum "$file" | awk '{print $1}'
         }
 
-        # Find architecture filenames dynamically to avoid rigid naming schemes
-        UNIVERSAL_NAME=$(ls *universal*.apk 2>/dev/null | head -n 1)
-        ARM64_NAME=$(ls *arm64-v8a*.apk 2>/dev/null | head -n 1)
-        ARMV7_NAME=$(ls *armeabi-v7a*.apk 2>/dev/null | head -n 1)
-        X86_NAME=$(ls *x86_64*.apk 2>/dev/null | head -n 1)
+        UNIVERSAL_NAME="universal-${VERSION}-release.apk"
+        ARM64_NAME="arm64-v8a-${VERSION}-release.apk"
+        ARMV7_NAME="armeabi-v7a-${VERSION}-release.apk"
+        X86_NAME="x86-${VERSION}-release.apk"
+        X86_64_NAME="x86_64-${VERSION}-release.apk"
 
-        # Body is indented 8 spaces so YAML keeps it inside this block;
-        # YAML strips that indent before bash sees it.
-        cat << EOF > ../../../../../body.md
+        cat << EOF > "$GITHUB_WORKSPACE/body.md"
         ### 🚀 Automated Build Details
 
-        *   **Release Tag:** \`${{ github.ref_name }}\`
-        *   **Commit Reference:** \`${{ github.sha }}\`
-        *   **Triggered By:** @${{ github.actor }}
-        *   **Build Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-        *   **Pipeline Source:** [Job Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+        * **Release Tag:** \`${{ github.ref_name }}\`
+        * **Commit Reference:** \`${{ github.sha }}\`
+        * **Triggered By:** @${{ github.actor }}
+        * **Build Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+        * **Pipeline Source:** [Job Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
         ---
 
-        ### 🛠️ Developer Notes & Architecture Breakdown
+        ### 📦 APK Assets
 
-        This production-ready release contains separate APK variants optimized for distinct CPU architectures alongside a fallback universal variant. Splitting the builds reduces the download size and installation footprint for end-users.
+        ABI splits are disabled for this build. The architecture-named assets below are copies of the same universal APK, not separately optimized builds.
 
-        | Variant Asset Name | Target Architecture | Build Size | SHA-256 Checksum Verification |
-        | :--- | :--- | :--- | :--- |
-        | \`${UNIVERSAL_NAME:-universal-release.apk}\` | All ABIs (Universal) | \`$(calc_size "$UNIVERSAL_NAME")\` | \`$(calc_sha "$UNIVERSAL_NAME")\` |
-        | \`${ARM64_NAME:-arm64-v8a-release.apk}\` | Modern 64-bit ARM | \`$(calc_size "$ARM64_NAME")\` | \`$(calc_sha "$ARM64_NAME")\` |
-        | \`${ARMV7_NAME:-armeabi-v7a-release.apk}\` | Legacy 32-bit ARM | \`$(calc_size "$ARMV7_NAME")\` | \`$(calc_sha "$ARMV7_NAME")\` |
-        | \`${X86_NAME:-x86_64-release.apk}\` | 64-bit Intel/AMD Emulators | \`$(calc_size "$X86_NAME")\` | \`$(calc_sha "$X86_NAME")\` |
-        | \`tui.apk\` | In-App System Overrides | \`$(calc_size "tui.apk")\` | \`$(calc_sha "tui.apk")\` |
-
-        > 💡 **Notice on \`tui.apk\`:** This asset is structurally identical to the Universal layout, tailored explicitly for downstream dynamic validation routines executed via the \`tui -app_update\` module interface.
-
-        ---
-
-        ### 📝 Changelog Summary
-
-        For full update details, granular diffs, and precise commit history, please review the automated deployment logs:
-        🔗 **[View Complete Commit History](${{ github.server_url }}/${{ github.repository }}/commits/${{ github.ref_name }})**
+        | Asset | Build Size | SHA-256 |
+        | :--- | :--- | :--- |
+        | \`${UNIVERSAL_NAME}\` (universal) | \`$(calc_size "$UNIVERSAL_NAME")\` | \`$(calc_sha "$UNIVERSAL_NAME")\` |
+        | \`${ARM64_NAME}\` | \`$(calc_size "$ARM64_NAME")\` | \`$(calc_sha "$ARM64_NAME")\` |
+        | \`${ARMV7_NAME}\` | \`$(calc_size "$ARMV7_NAME")\` | \`$(calc_sha "$ARMV7_NAME")\` |
+        | \`${X86_NAME}\` | \`$(calc_size "$X86_NAME")\` | \`$(calc_sha "$X86_NAME")\` |
+        | \`${X86_64_NAME}\` | \`$(calc_size "$X86_64_NAME")\` | \`$(calc_sha "$X86_64_NAME")\` |
+        | \`tui.apk\` | \`$(calc_size "tui.apk")\` | \`$(calc_sha "tui.apk")\` |
 
         ---
 
-        ### 📥 Deployment & Installation Guide
+        ### 📝 Changelog
 
-        1.  **Identify Architecture:** Determine your device's CPU architecture using an info app or the universal installer.
-        2.  **Allow Unknown Sources:** Navigate to \`Settings\` > \`Security\` > \`Install Unknown Apps\` and enable permission for your browser/file manager.
-        3.  **Install:** Download the matching variant above and execute the package installer.
+        For full update details and commit history, see [the commits for this release](${{ github.server_url }}/${{ github.repository }}/commits/${{ github.ref_name }}).
+
+        ### 📥 Installation
+
+        Download the universal APK or an ABI-named copy above, then install it on your Android device. The ABI-named files are identical copies of the universal APK.
         EOF
 
-        # Append fix-bug.md from the repo root to the release notes
         if [ -f "$GITHUB_WORKSPACE/fix-bug.md" ]; then
           {
             echo ""
             echo "---"
             echo ""
-            echo "### 🐛 Bug Fixes And New features"
+            echo "### 🐛 Bug Fixes and New Features"
             echo ""
             cat "$GITHUB_WORKSPACE/fix-bug.md"
             echo ""
           } >> "$GITHUB_WORKSPACE/body.md"
         else
-          echo "Error: fix-bug.md not found in repo root!" && exit 1
+          echo "Error: fix-bug.md not found in repo root!" >&2
+          exit 1
         fi
 
     - name: Create Release and Upload APKs
