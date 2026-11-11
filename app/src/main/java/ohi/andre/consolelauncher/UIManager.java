@@ -1277,6 +1277,7 @@ public class UIManager implements OnTouchListener {
         rootView.addView(inputOutputView);
 
         dashboardManager = new DashboardManager(mContext, rootView);
+        dashboardManager.setCommandExecuter(executer);
         dashboardManager.start();
 
         terminalView = (TextView) inputOutputView.findViewById(R.id.terminal_view);

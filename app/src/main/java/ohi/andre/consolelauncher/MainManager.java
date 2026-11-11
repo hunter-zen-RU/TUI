@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import java.util.Map;
+
 import ohi.andre.consolelauncher.commands.Command;
 import ohi.andre.consolelauncher.commands.CommandGroup;
 import ohi.andre.consolelauncher.commands.CommandTuils;
@@ -23,12 +25,17 @@ import ohi.andre.consolelauncher.commands.main.MainPack;
 import ohi.andre.consolelauncher.commands.main.raw.location;
 import ohi.andre.consolelauncher.commands.main.specific.RedirectCommand;
 import ohi.andre.consolelauncher.managers.AliasManager;
+import ohi.andre.consolelauncher.managers.AptPackageResolver;
 import ohi.andre.consolelauncher.managers.AppsManager;
 import ohi.andre.consolelauncher.managers.HybridCommandInterpreter;
 import ohi.andre.consolelauncher.managers.ChangelogManager;
 import ohi.andre.consolelauncher.managers.ContactManager;
 import ohi.andre.consolelauncher.managers.HTMLExtractManager;
+import ohi.andre.consolelauncher.managers.PackageHelper;
+import ohi.andre.consolelauncher.managers.PackageManager;
+import ohi.andre.consolelauncher.managers.ProotDistroManager;
 import ohi.andre.consolelauncher.managers.RssManager;
+import ohi.andre.consolelauncher.managers.TermuxSessionManager;
 import ohi.andre.consolelauncher.managers.TerminalManager;
 import ohi.andre.consolelauncher.managers.ThemeManager;
 import ohi.andre.consolelauncher.managers.TimeManager;
@@ -105,7 +112,9 @@ public class MainManager {
             new MacroTrigger(),
             new GroupTrigger(),
             new AliasTrigger(),
+            new PkgCmdTrigger(),
             new TuiCommandTrigger(),
+            new StandalonePackageTrigger(),
             new AppTrigger(),
             new ShellCommandTrigger()
     };
@@ -574,6 +583,187 @@ public class MainManager {
             }.start();
 
             return true;
+        }
+    }
+
+    private class PkgCmdTrigger implements CmdTrigger {
+        @Override
+        public boolean trigger(final MainPack info, final String input) throws Exception {
+            final String trimmed = input.trim();
+            if (!trimmed.startsWith("pkg") && !trimmed.startsWith("apt")) {
+                return false;
+            }
+
+            String[] parts = trimmed.split("\\s+");
+            if (parts.length == 0) return false;
+
+            String cmdName = parts[0].toLowerCase();
+            if (!cmdName.equals("pkg") && !cmdName.equals("apt") && !cmdName.equals("apt-get")) {
+                return false;
+            }
+
+            File termuxPkg = new File("/data/data/com.termux/files/usr/bin/pkg");
+            File termuxApt = new File("/data/data/com.termux/files/usr/bin/apt");
+
+            if (termuxPkg.exists() || termuxApt.exists()) {
+                new StoppableThread() {
+                    @Override
+                    public void run() {
+                        String result = PackageHelper.executeViaTermuxWrapper(info.context, trimmed);
+                        Tuils.sendOutput(info, result, TerminalManager.CATEGORY_OUTPUT);
+                    }
+                }.start();
+                return true;
+            }
+
+            // Standalone mode (Termux NOT installed)
+            if (parts.length >= 2) {
+                String subCmd = parts[1].toLowerCase();
+                if (subCmd.equals("install") || subCmd.equals("add")) {
+                    if (parts.length >= 3) {
+                        String pkgName = parts[2];
+                        Tuils.sendOutput(info.context, "T-UI Standalone Package Manager: Installing '" + pkgName + "'...");
+                        PackageManager.installPackage(info.context, pkgName, new PackageManager.InstallCallback() {
+                            @Override
+                            public void onSuccess(String message) {
+                                Tuils.sendOutput(info, message, TerminalManager.CATEGORY_OUTPUT);
+                            }
+                            @Override
+                            public void onError(String error) {
+                                Tuils.sendOutput(android.graphics.Color.RED, info.context, "Install Error: " + error);
+                            }
+                        });
+                        return true;
+                    } else {
+                        Tuils.sendOutput(info, "Usage: " + cmdName + " install <package>", TerminalManager.CATEGORY_OUTPUT);
+                        return true;
+                    }
+                } else if (subCmd.equals("remove") || subCmd.equals("uninstall") || subCmd.equals("purge")) {
+                    if (parts.length >= 3) {
+                        String pkgName = parts[2];
+                        boolean removed = PackageManager.removeInstalledPackage(info.context, pkgName);
+                        if (removed) {
+                            Tuils.sendOutput(info, "Successfully removed '" + pkgName + "'", TerminalManager.CATEGORY_OUTPUT);
+                        } else {
+                            Tuils.sendOutput(info, "Package '" + pkgName + "' is not installed.", TerminalManager.CATEGORY_OUTPUT);
+                        }
+                        return true;
+                    }
+                } else if (subCmd.equals("update") || subCmd.equals("upgrade") || subCmd.equals("refresh")) {
+                    Tuils.sendOutput(info.context, "Refreshing repository indices...");
+                    PackageManager.fetchRepoIndex(info.context, new PackageManager.RepoCallback() {
+                        @Override
+                        public void onSuccess(List<PackageManager.PackageInfo> packages) {
+                            Tuils.sendOutput(info, "Custom package repository updated (" + packages.size() + " packages indexed).", TerminalManager.CATEGORY_OUTPUT);
+                        }
+                        @Override
+                        public void onError(String error) {
+                            Tuils.sendOutput(android.graphics.Color.RED, info.context, "Custom repo update notice: " + error);
+                        }
+                    });
+
+                    AptPackageResolver.fetchPackageIndex(info.context, true, new AptPackageResolver.IndexCallback() {
+                        @Override
+                        public void onSuccess(File indexFile) {
+                            Tuils.sendOutput(info, "Official Termux APT index updated (" + (indexFile.length() / 1024) + " KB).", TerminalManager.CATEGORY_OUTPUT);
+                        }
+                        @Override
+                        public void onError(String error) {
+                            Tuils.sendOutput(android.graphics.Color.RED, info.context, "APT index update failed: " + error);
+                        }
+                    });
+                    return true;
+                } else if (subCmd.equals("list") || subCmd.equals("show")) {
+                    Map<String, String> installed = PackageManager.getInstalledPackagesMap(info.context);
+                    if (installed.isEmpty()) {
+                        Tuils.sendOutput(info, "No standalone packages installed.", TerminalManager.CATEGORY_OUTPUT);
+                    } else {
+                        StringBuilder sb = new StringBuilder("Installed Standalone Packages:\n");
+                        for (Map.Entry<String, String> entry : installed.entrySet()) {
+                            sb.append("• ").append(entry.getKey()).append(" -> ").append(entry.getValue()).append("\n");
+                        }
+                        Tuils.sendOutput(info, sb.toString(), TerminalManager.CATEGORY_OUTPUT);
+                    }
+                    return true;
+                }
+            }
+
+            Tuils.sendOutput(info, "T-UI Standalone Package Manager v1.0\nCommands: " + cmdName + " install <pkg> | " + cmdName + " remove <pkg> | " + cmdName + " update | " + cmdName + " list", TerminalManager.CATEGORY_OUTPUT);
+            return true;
+        }
+    }
+
+    private class StandalonePackageTrigger implements CmdTrigger {
+        @Override
+        public boolean trigger(final MainPack info, final String input) throws Exception {
+            final String trimmed = input.trim();
+            if (trimmed.isEmpty()) return false;
+
+            if (ProotDistroManager.isDistroCommand(trimmed)) {
+                ProotDistroManager.executeDistroCommand(info.context, trimmed, new ProotDistroManager.OutputCallback() {
+                    @Override
+                    public void onOutput(String text) {
+                        Tuils.sendOutput(info, text, TerminalManager.CATEGORY_OUTPUT);
+                    }
+                });
+                return true;
+            }
+
+            if (ProotDistroManager.hasActiveDistro()) {
+                if (trimmed.equals("exit") || trimmed.equals("logout")) {
+                    ProotDistroManager.setActiveDistro(null);
+                    Tuils.sendOutput(info, "Exited container. Returned to host shell.", TerminalManager.CATEGORY_OUTPUT);
+                    return true;
+                }
+                ProotDistroManager.runInActiveDistro(info.context, trimmed, new ProotDistroManager.OutputCallback() {
+                    @Override
+                    public void onOutput(String text) {
+                        Tuils.sendOutput(info, text, TerminalManager.CATEGORY_OUTPUT);
+                    }
+                });
+                return true;
+            }
+
+            String binaryName = trimmed.split("\\s+")[0];
+
+            TermuxSessionManager sessionMgr = new TermuxSessionManager(info.context);
+            TermuxSessionManager.SessionConfig config = sessionMgr.createSessionConfig();
+
+            String nativeLibDir = info.context.getApplicationInfo().nativeLibraryDir;
+            File nativeLib1 = new File(nativeLibDir, "lib" + binaryName + "_exec.so");
+            File nativeLib2 = new File(nativeLibDir, "lib" + binaryName + ".so");
+            File nativeLib3 = new File(nativeLibDir, binaryName);
+
+            File tuiBin = new File(config.getHomePath(), "tui/bin/" + binaryName);
+            File prefixBin = new File(config.getPrefixPath(), "bin/" + binaryName);
+            File termuxBin = new File("/data/data/com.termux/files/usr/bin/" + binaryName);
+
+            final boolean isNativeLib = nativeLib1.exists() || nativeLib2.exists() || nativeLib3.exists();
+
+            if (isNativeLib || tuiBin.exists() || prefixBin.exists() || termuxBin.exists()) {
+                new StoppableThread() {
+                    @Override
+                    public void run() {
+                        PackageManager.ensurePackageDependencies(info.context, binaryName);
+                        String output;
+                        if (isNativeLib) {
+                            String[] cmdParts = trimmed.split("\\s+");
+                            java.util.List<String> args = new java.util.ArrayList<>();
+                            for (int k = 1; k < cmdParts.length; k++) {
+                                args.add(cmdParts[k]);
+                            }
+                            output = sessionMgr.executeNativeLibBinary(binaryName, args, 300);
+                        } else {
+                            output = sessionMgr.executeDirectShellCommand(trimmed, 300);
+                        }
+                        if (output != null && !output.isEmpty()) {
+                            Tuils.sendOutput(info, output, TerminalManager.CATEGORY_OUTPUT);
+                        }
+                    }
+                }.start();
+                return true;
+            }
+            return false;
         }
     }
 

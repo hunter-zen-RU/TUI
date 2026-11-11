@@ -408,9 +408,9 @@ class HybridCommandInterpreter(
     }
 
     fun getTermuxEnvironment(): Map<String, String> {
-        val externalFiles = context.getExternalFilesDir(null) ?: context.filesDir
-        val homeDir = File(externalFiles, "home").apply { if (!exists()) mkdirs() }
-        val prefixDir = File(externalFiles, "usr").apply { if (!exists()) mkdirs() }
+        val baseDir = context.filesDir
+        val homeDir = File(baseDir, "home").apply { if (!exists()) mkdirs() }
+        val prefixDir = File(baseDir, "usr").apply { if (!exists()) mkdirs() }
         val tmpDir = File(context.cacheDir, "tmp").apply { if (!exists()) mkdirs() }
         val binDir = File(prefixDir, "bin").apply { if (!exists()) mkdirs() }
 

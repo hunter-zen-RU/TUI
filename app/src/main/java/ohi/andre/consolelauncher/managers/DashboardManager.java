@@ -33,6 +33,7 @@ import ohi.andre.consolelauncher.R;
 import ohi.andre.consolelauncher.managers.xml.XMLPrefsManager;
 import ohi.andre.consolelauncher.managers.xml.options.Dashboard;
 import ohi.andre.consolelauncher.tuils.Tuils;
+import ohi.andre.consolelauncher.tuils.interfaces.CommandExecuter;
 
 public class DashboardManager {
 
@@ -95,6 +96,12 @@ public class DashboardManager {
 
     private final List<BoxHolder> boxHolders = new ArrayList<>();
 
+    private CommandExecuter commandExecuter;
+
+    public void setCommandExecuter(CommandExecuter executer) {
+        this.commandExecuter = executer;
+    }
+
     public DashboardManager(Context context, View rootView) {
         this.context = context;
         instance = this;
@@ -118,7 +125,33 @@ public class DashboardManager {
             setupGrid();
         }
 
+        final android.view.GestureDetector swipeDetector = new android.view.GestureDetector(context, new android.view.GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_THRESHOLD = 80;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 80;
+
+            @Override
+            public boolean onFling(android.view.MotionEvent e1, android.view.MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) return false;
+                float diffX = e2.getX() - e1.getX();
+                float diffY = e2.getY() - e1.getY();
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffX > 0) {
+                            SessionManager.switchPreviousSession(context);
+                        } else {
+                            SessionManager.switchNextSession(context);
+                        }
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
+
+        View.OnTouchListener swipeListener = (v, event) -> swipeDetector.onTouchEvent(event);
+
         if (gridWrapper != null) {
+            gridWrapper.setOnTouchListener(swipeListener);
             gridWrapper.setOnClickListener(v -> {
                 if ("grid".equalsIgnoreCase(dashboardMode)) {
                     toggleExpand();
@@ -128,6 +161,9 @@ public class DashboardManager {
                 handleLongPress();
                 return true;
             });
+        }
+        if (rootContainer != null) {
+            rootContainer.setOnTouchListener(swipeListener);
         }
     }
 
@@ -292,6 +328,25 @@ public class DashboardManager {
                 barTv.setVisibility(View.GONE);
             }
 
+            final String boxAction = item.getAction();
+            boxLayout.setOnClickListener(v -> {
+                if (boxAction != null && !boxAction.trim().isEmpty()) {
+                    String cmdToRun = boxAction.trim();
+                    Tuils.sendOutput(context, "$ " + cmdToRun);
+                    if (commandExecuter != null) {
+                        commandExecuter.execute(cmdToRun, null);
+                    } else {
+                        Intent cmdIntent = new Intent("ohi.andre.consolelauncher.EXEC_COMMAND");
+                        cmdIntent.putExtra("cmd", cmdToRun);
+                        context.sendBroadcast(cmdIntent);
+                    }
+                } else {
+                    if ("grid".equalsIgnoreCase(dashboardMode)) {
+                        toggleExpand();
+                    }
+                }
+            });
+
             boxLayout.addView(titleRow);
             boxLayout.addView(barTv);
             gridContainer.addView(boxLayout);
@@ -367,7 +422,7 @@ public class DashboardManager {
     private void updateDashboardData() {
         try {
             if (timeTv != null) timeTv.setText(new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date()));
-            if (titleTv != null) titleTv.setText(" " + VariablesManager.resolveVariables(context, baseTitle, null));
+            if (titleTv != null) titleTv.setText(" " + VariablesManager.resolveVariables(context, baseTitle, null) + " [" + SessionManager.getActiveSession().toUpperCase() + "]");
             if (dotTv != null) {
                 dotState = !dotState;
                 dotTv.setText(dotState ? "● LIVE" : "○ LIVE");

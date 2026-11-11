@@ -47,8 +47,13 @@ public class tui extends ParamCommand {
             @Override
             public String exec(ExecutePack pack) {
                 String mgr = pack.getString().trim();
+                if (mgr.isEmpty()) return "Usage: tui -set <hybrid|native|termux|apt|pkg>";
                 VariablesManager.setVariable("active_pkg_mgr", mgr);
-                return "Package manager set to: " + mgr;
+                if ("native".equalsIgnoreCase(mgr) || "termux".equalsIgnoreCase(mgr) || "apt".equalsIgnoreCase(mgr) || "pkg".equalsIgnoreCase(mgr)) {
+                    return "Package manager set to: " + mgr + " (Native Termux-style installation mode)";
+                } else {
+                    return "Package manager set to: " + mgr + " (T-UI Visual Progress Bar mode)";
+                }
             }
         },
         update {
@@ -201,11 +206,75 @@ public class tui extends ParamCommand {
                 }).start();
                 return "Launching Termux command: " + cmd;
             }
+        },
+        version {
+            @Override
+            public int[] args() { return new int[0]; }
+
+            @Override
+            public String exec(ExecutePack pack) {
+                try {
+                    android.content.pm.PackageInfo pInfo = pack.context.getPackageManager().getPackageInfo(pack.context.getPackageName(), 0);
+                    return "T-UI Console Launcher v" + pInfo.versionName + " (Build " + pInfo.versionCode + ")";
+                } catch (Exception e) {
+                    return "T-UI Console Launcher v1.0";
+                }
+            }
+        },
+        about {
+            @Override
+            public int[] args() { return new int[0]; }
+
+            @Override
+            public String exec(ExecutePack pack) {
+                String repoUrl = "https://github.com/hunter-zen-RU/TUI/";
+                try {
+                    android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(repoUrl));
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    pack.context.startActivity(intent);
+                } catch (Exception e) {
+                    Tuils.log(e);
+                }
+                return "T-UI Repository: " + repoUrl;
+            }
+        },
+        session {
+            @Override
+            public int[] args() { return new int[] {CommandAbstraction.PLAIN_TEXT}; }
+
+            @Override
+            public String exec(ExecutePack pack) {
+                String arg = pack.getString().trim();
+                if (arg.isEmpty() || "list".equalsIgnoreCase(arg)) {
+                    List<String> list = ohi.andre.consolelauncher.managers.SessionManager.getSessions();
+                    String active = ohi.andre.consolelauncher.managers.SessionManager.getActiveSession();
+                    StringBuilder sb = new StringBuilder("Active Sessions:\n");
+                    for (String s : list) {
+                        if (s.equalsIgnoreCase(active)) {
+                            sb.append("• ").append(s).append(" [ACTIVE]\n");
+                        } else {
+                            sb.append("• ").append(s).append("\n");
+                        }
+                    }
+                    sb.append("\nTip: Swipe LEFT or RIGHT on the dashboard grid to switch active session.");
+                    return sb.toString();
+                }
+
+                if (arg.startsWith("close ")) {
+                    String toClose = arg.substring(6).trim();
+                    return ohi.andre.consolelauncher.managers.SessionManager.closeSession(pack.context, toClose);
+                }
+
+                return ohi.andre.consolelauncher.managers.SessionManager.createOrSwitchSession(pack.context, arg);
+            }
         };
 
         static Param get(String p) {
-            p = p.toLowerCase();
-            for (Param p1 : values()) if (p.endsWith(p1.label())) return p1;
+            if (p == null) return null;
+            p = p.toLowerCase().trim();
+            for (Param p1 : values()) {
+                if (p.endsWith(p1.label()) || p.equalsIgnoreCase(p1.name()) || p.equalsIgnoreCase("-" + p1.name())) return p1;
+            }
             return null;
         }
 

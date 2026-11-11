@@ -11,8 +11,9 @@ public class DashboardItem {
     private boolean showBar;
     private String variableName;
     private String customText;
+    private String action;
 
-    public DashboardItem(int index, String id, String type, String title, String color, String format, boolean showBar, String variableName, String customText) {
+    public DashboardItem(int index, String id, String type, String title, String color, String format, boolean showBar, String variableName, String customText, String action) {
         this.index = index;
         this.id = id != null && !id.isEmpty() ? id : "box" + index;
         this.type = type != null ? type.toLowerCase() : "cpu";
@@ -22,6 +23,11 @@ public class DashboardItem {
         this.showBar = showBar;
         this.variableName = variableName != null ? variableName : "";
         this.customText = customText != null ? customText : "";
+        this.action = action != null ? action : "";
+    }
+
+    public DashboardItem(int index, String id, String type, String title, String color, String format, boolean showBar, String variableName, String customText) {
+        this(index, id, type, title, color, format, showBar, variableName, customText, "");
     }
 
     public int getIndex() {
@@ -101,6 +107,14 @@ public class DashboardItem {
 
     public void setCustomText(String customText) {
         this.customText = customText;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
     }
 
     public static String getDefaultTitleForType(String type) {

@@ -210,8 +210,9 @@ public class DashboardItemManager {
 
                     String var = elem.hasAttribute("var") ? elem.getAttribute("var") : "";
                     String text = elem.hasAttribute("text") ? elem.getAttribute("text") : "";
+                    String action = elem.hasAttribute("action") ? elem.getAttribute("action") : "";
 
-                    DashboardItem item = new DashboardItem(index, id, type, title, color, format, showBar, var, text);
+                    DashboardItem item = new DashboardItem(index, id, type, title, color, format, showBar, var, text, action);
                     items.add(item);
                 }
             }
@@ -264,6 +265,9 @@ public class DashboardItemManager {
                 }
                 if (item.getCustomText() != null && !item.getCustomText().isEmpty()) {
                     elem.setAttribute("text", item.getCustomText());
+                }
+                if (item.getAction() != null && !item.getAction().isEmpty()) {
+                    elem.setAttribute("action", item.getAction());
                 }
 
                 rootElement.appendChild(elem);

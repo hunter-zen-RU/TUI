@@ -17,11 +17,11 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.aistudio.consolelauncher.tuiapp"
+        applicationId "com.huntech.tui"
         minSdk 26
         targetSdk 34
         versionCode 301
-        versionName "v6.15.1-updated-v2"
+        versionName "v6.15.15-beta"
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -67,6 +67,12 @@ android {
             enable false
         }
     }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
 }
 
 dependencies {
@@ -100,4 +106,8 @@ dependencies {
     
     // Markdown Rendering
     implementation 'io.noties.markwon:core:4.6.2'
+    
+    // APT deb & tar.xz archive extraction
+    implementation 'org.apache.commons:commons-compress:1.26.1'
+    implementation 'org.tukaani:xz:1.9'
 }
