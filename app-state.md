@@ -153,3 +153,10 @@ T-UI Console Launcher (`com.huntech.tui`, version `v6.15.15-beta`) is a modern A
    - Never create or use `local.properties`.
    - Never alter `debug.keystore` or signing configurations in `app/build.gradle`.
    - Always run `compile_applet` to verify compilation after file modifications.
+
+---
+
+ ## Other features
+
+ Implement a Compose-based predictive text overlay that appears above the terminal input line, offering command suggestions based on the user's history and installed aliases.
+ Create a formal Plugin Manager class that allows loading and unloading external JAR files as runtime modules to extend TUI's command set .
