@@ -1,5 +1,5 @@
 {
-  "name": "T-UI Console Launcher",
+  "name": "T-UI",
   "description": "CLI-style Android Terminal Launcher with custom commands, themes, aliases, and system tools.",
   "requestFramePermissions": [],
   "majorCapabilities": [

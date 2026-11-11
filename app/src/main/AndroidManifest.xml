@@ -40,7 +40,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
-    <uses-permission android:name="ohi.andre.consolelauncher.permission.RECEIVE_CMD" />
+    <uses-permission android:name="${applicationId}.permission.RECEIVE_CMD" />
 
     <queries>
         <package android:name="com.arlosoft.macrodroid" />
@@ -85,7 +85,7 @@
         android:required="false" />
 
     <permission
-        android:name="ohi.andre.consolelauncher.permission.RECEIVE_CMD"
+        android:name="${applicationId}.permission.RECEIVE_CMD"
         android:protectionLevel="signature" />
 
     <application
@@ -125,7 +125,6 @@
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.LAUNCHER_APP" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -323,11 +322,11 @@
 
         <receiver
             android:name=".tuils.PublicIOReceiver"
-            android:permission="ohi.andre.consolelauncher.permission.RECEIVE_CMD"
+            android:permission="${applicationId}.permission.RECEIVE_CMD"
             android:exported="true">
             <intent-filter>
-                <action android:name="ohi.andre.consolelauncher.action_public_cmd" />
-                <action android:name="ohi.andre.consolelauncher.action_public_output" />
+                <action android:name="${applicationId}.action_public_cmd" />
+                <action android:name="${applicationId}.action_public_output" />
             </intent-filter>
         </receiver>
     </application>

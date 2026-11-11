@@ -267,10 +267,11 @@ public class LauncherActivity extends AppCompatActivity implements Reloadable {
         filter1.addAction(PublicIOReceiver.ACTION_OUTPUT);
 
         publicIOReceiver = new PublicIOReceiver();
+        String receiveCmdPermission = BuildConfig.APPLICATION_ID + ".permission.RECEIVE_CMD";
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            getApplicationContext().registerReceiver(publicIOReceiver, filter1, "ohi.andre.consolelauncher.permission.RECEIVE_CMD", null, Context.RECEIVER_EXPORTED);
+            getApplicationContext().registerReceiver(publicIOReceiver, filter1, receiveCmdPermission, null, Context.RECEIVER_EXPORTED);
         } else {
-            getApplicationContext().registerReceiver(publicIOReceiver, filter1, "ohi.andre.consolelauncher.permission.RECEIVE_CMD", null);
+            getApplicationContext().registerReceiver(publicIOReceiver, filter1, receiveCmdPermission, null);
         }
 
         int requestedOrientation = XMLPrefsManager.getInt(Behavior.orientation);
